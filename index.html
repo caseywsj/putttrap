@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+<meta name="theme-color" content="#FDFAF6" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="PuttTrap" />
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%23BA7517'/%3E%3Ctext x='90' y='118' font-family='Georgia,serif' font-size='110' font-weight='500' fill='%23FDFAF6' text-anchor='middle'%3EP%3C/text%3E%3C/svg%3E" />
+<title>PuttTrap</title>
+<style>
+  :root {
+    --bg: #FDFAF6;
+    --surface: #FFFFFF;
+    --surface-2: #F4F0E8;
+    --ink: #2C2C2A;
+    --ink-2: #5F5E5A;
+    --ink-3: #888780;
+    --border: rgba(44,44,42,0.12);
+    --border-strong: rgba(44,44,42,0.22);
+    --amber: #BA7517;
+    --amber-bg: #FAEEDA;
+    --amber-ink: #854F0B;
+    --green-bg: #E1F5EE;
+    --green-ink: #085041;
+    --green-border: #1D9E75;
+    --red-bg: #FCEBEB;
+    --red-ink: #791F1F;
+    --red-border: #E24B4A;
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --font-sans: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+    --font-serif: "Lora", Georgia, serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1A1A19;
+      --surface: #232321;
+      --surface-2: #2C2C2A;
+      --ink: #F4F0E8;
+      --ink-2: #B4B2A9;
+      --ink-3: #888780;
+      --border: rgba(244,240,232,0.12);
+      --border-strong: rgba(244,240,232,0.22);
+      --amber-bg: #412402;
+      --amber-ink: #FAC775;
+      --green-bg: #04342C;
+      --green-ink: #9FE1CB;
+      --red-bg: #501313;
+      --red-ink: #F09595;
+    }
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); font-family: var(--font-sans); font-size: 15px; line-height: 1.5; }
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); max-width: 500px; margin: 0 auto; min-height: 100vh; }
+  button { font-family: inherit; }
+  input, select { font-family: inherit; }
+  .wrap { padding: 16px; padding-bottom: 80px; }
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 50%; background: var(--amber); color: var(--bg); display: flex; align-items: center; justify-content: center; font-family: var(--font-serif); font-weight: 500; font-size: 18px; }
+  .brand-name { font-family: var(--font-serif); font-size: 20px; font-weight: 500; letter-spacing: -0.01em; }
+  .brand-tag { margin-left: auto; font-size: 11px; color: var(--ink-3); }
+  .tabs { display: flex; gap: 4px; margin-bottom: 14px; background: var(--surface-2); padding: 4px; border-radius: var(--radius-md); position: sticky; top: 0; z-index: 10; }
+  .tab { flex: 1; padding: 9px 4px; font-size: 12px; font-weight: 500; text-align: center; border-radius: var(--radius-sm); cursor: pointer; color: var(--ink-2); background: transparent; border: none; }
+  .tab.active { background: var(--surface); color: var(--ink); border: 0.5px solid var(--border); }
+  .card { background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 12px; }
+  .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card-title { font-size: 15px; font-weight: 500; }
+  .card-sub { font-size: 12px; color: var(--ink-2); }
+  .hole-num { font-family: var(--font-serif); font-size: 32px; font-weight: 500; line-height: 1; }
+  .hole-nav { display: flex; gap: 6px; }
+  .nav-btn { width: 36px; height: 36px; border-radius: var(--radius-md); border: 0.5px solid var(--border); background: transparent; font-size: 18px; cursor: pointer; color: var(--ink); }
+  .nav-btn:disabled { opacity: 0.3; }
+  .section-label { font-size: 11px; color: var(--ink-2); margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.04em; }
+  .dist-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 14px; }
+  .dist-btn { padding: 12px 4px; font-size: 13px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .dist-btn.selected { background: var(--amber); color: white; border-color: var(--amber); }
+  .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .result-btn { padding: 16px; font-size: 14px; font-weight: 500; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .result-btn.made { background: var(--green-bg); border-color: var(--green-border); color: var(--green-ink); }
+  .result-btn.missed { background: var(--red-bg); border-color: var(--red-border); color: var(--red-ink); }
+  .result-btn:disabled { opacity: 0.4; }
+  .miss-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+  .miss-btn { padding: 11px; font-size: 12px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .miss-btn.selected { background: var(--surface-2); border-color: var(--border-strong); }
+  .putts-list { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
+  .putt-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; }
+  .made-tag { color: var(--green-ink); font-weight: 500; }
+  .miss-tag { color: var(--red-ink); }
+  .hole-actions { display: flex; gap: 6px; margin-top: 14px; }
+  .action-btn { flex: 1; padding: 11px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .action-btn.primary { background: var(--amber); color: white; border-color: var(--amber); }
+  .action-btn.danger { color: var(--red-ink); }
+  .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .stat { background: var(--surface-2); padding: 12px; border-radius: var(--radius-md); }
+  .stat-label { font-size: 11px; color: var(--ink-2); margin-bottom: 4px; }
+  .stat-value { font-family: var(--font-serif); font-size: 24px; font-weight: 500; color: var(--ink); line-height: 1.2; }
+  .stat-sub { font-size: 11px; color: var(--ink-3); margin-top: 2px; }
+  .miss-chart { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
+  .miss-cell { background: var(--surface-2); padding: 10px; border-radius: var(--radius-md); text-align: center; font-size: 11px; color: var(--ink-2); }
+  .miss-cell strong { display: block; font-family: var(--font-serif); font-size: 20px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
+  .miss-cell.dominant { background: var(--amber-bg); }
+  .miss-cell.dominant strong { color: var(--amber-ink); }
+  .empty { color: var(--ink-3); font-size: 13px; text-align: center; padding: 16px 0; }
+  .banner { padding: 10px 12px; background: var(--amber-bg); border-radius: var(--radius-md); font-size: 12px; color: var(--amber-ink); margin-bottom: 12px; }
+  .rounds-list { display: flex; flex-direction: column; gap: 8px; }
+  .round-row { display: flex; align-items: center; justify-content: space-between; padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); cursor: pointer; }
+  .round-date { font-size: 13px; font-weight: 500; }
+  .round-sub { font-size: 11px; color: var(--ink-2); }
+  .round-stats { display: flex; gap: 14px; align-items: center; }
+  .round-stat { text-align: right; }
+  .round-stat-val { font-family: var(--font-serif); font-size: 17px; font-weight: 500; }
+  .round-stat-lbl { font-size: 10px; color: var(--ink-2); }
+  .trend { display: flex; align-items: end; gap: 4px; height: 70px; margin: 14px 0 6px; padding: 0 4px; }
+  .trend-bar { flex: 1; background: var(--amber); border-radius: 2px 2px 0 0; min-height: 4px; }
+  .trend-bar.older { background: var(--border-strong); }
+  .trend-labels { display: flex; justify-content: space-between; font-size: 10px; color: var(--ink-3); padding: 0 4px; }
+  .trend-labels span { flex: 1; text-align: center; }
+  .drill-card { padding: 14px; background: var(--surface-2); border-radius: var(--radius-md); margin-bottom: 8px; }
+  .drill-title { font-size: 14px; font-weight: 500; margin-bottom: 4px; }
+  .drill-desc { font-size: 12px; color: var(--ink-2); margin-bottom: 10px; line-height: 1.4; }
+  .drill-input { display: flex; gap: 6px; align-items: center; }
+  .drill-input input { flex: 1; padding: 10px; font-size: 14px; border: 0.5px solid var(--border); border-radius: var(--radius-md); background: var(--surface); color: var(--ink); -webkit-appearance: none; }
+  .drill-input button { padding: 10px 14px; font-size: 13px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); font-weight: 500; }
+  .drill-last { font-size: 11px; color: var(--ink-2); margin-top: 8px; }
+  .followup { width: 100%; margin-top: 8px; padding: 11px; font-size: 13px; border: 0.5px solid var(--border); background: transparent; border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .install-hint { padding: 10px 12px; background: var(--surface-2); border-radius: var(--radius-md); font-size: 11px; color: var(--ink-2); margin-bottom: 12px; line-height: 1.5; }
+  .install-hint b { color: var(--ink); font-weight: 500; }
+  .export-row { display: flex; gap: 6px; margin-top: 12px; }
+  .export-row button { flex: 1; padding: 9px; font-size: 12px; border: 0.5px solid var(--border); background: transparent; border-radius: var(--radius-md); cursor: pointer; color: var(--ink-2); }
+  .lag-line { font-size: 13px; color: var(--ink-2); padding: 6px 0; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="brand">
+    <div class="brand-mark">P</div>
+    <div class="brand-name">PuttTrap</div>
+    <div class="brand-tag" id="brand-tag">v1</div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="round">Round</button>
+    <button class="tab" data-tab="stats">Stats</button>
+    <button class="tab" data-tab="history">History</button>
+    <button class="tab" data-tab="practice">Practice</button>
+  </div>
+
+  <div id="round-view">
+    <div id="active-round-banner" style="display: none;" class="banner"></div>
+
+    <div id="no-round-view" class="card" style="display: none;">
+      <div class="card-title" style="margin-bottom: 6px;">Start a new round</div>
+      <div class="card-sub" style="margin-bottom: 14px;">Log putts hole-by-hole. About 8 seconds per green. Works for real 18-hole rounds or 18-position practice green tests.</div>
+      <button class="action-btn primary" id="start-round-btn" style="width: 100%;">Start round</button>
+      <div class="install-hint" style="margin-top: 14px; margin-bottom: 0;">
+        <b>Tip:</b> Add to home screen via Safari share button → "Add to Home Screen" for full-screen app experience.
+      </div>
+    </div>
+
+    <div id="active-round-view" style="display: none;">
+      <div class="card">
+        <div class="card-header">
+          <div>
+            <div class="section-label">hole</div>
+            <div class="hole-num"><span id="hole-num">1</span> <span style="font-family: var(--font-sans); font-size: 13px; color: var(--ink-2); font-weight: 400;">of 18</span></div>
+          </div>
+          <div class="hole-nav">
+            <button class="nav-btn" id="prev-hole">‹</button>
+            <button class="nav-btn" id="next-hole">›</button>
+          </div>
+        </div>
+
+        <div class="section-label">distance to hole</div>
+        <div class="dist-grid" id="dist-grid">
+          <button class="dist-btn" data-dist="3">≤3 ft</button>
+          <button class="dist-btn" data-dist="6">6 ft</button>
+          <button class="dist-btn" data-dist="10">10 ft</button>
+          <button class="dist-btn" data-dist="20">20 ft</button>
+          <button class="dist-btn" data-dist="30">30 ft</button>
+          <button class="dist-btn" data-dist="50">40+ ft</button>
+        </div>
+
+        <div class="section-label">result</div>
+        <div class="result-grid">
+          <button class="result-btn made" id="made-btn" disabled>Made</button>
+          <button class="result-btn missed" id="missed-btn" disabled>Missed</button>
+        </div>
+
+        <div id="miss-detail" style="display: none;">
+          <div class="section-label" style="margin-top: 10px;">miss direction</div>
+          <div class="miss-grid" id="miss-grid">
+            <button class="miss-btn" data-miss="short">Short</button>
+            <button class="miss-btn" data-miss="long">Long</button>
+            <button class="miss-btn" data-miss="left">Left</button>
+            <button class="miss-btn" data-miss="right">Right</button>
+          </div>
+        </div>
+
+        <div class="putts-list" id="putts-list">
+          <div class="empty">No putts logged for this hole</div>
+        </div>
+
+        <div class="hole-actions">
+          <button class="action-btn" id="undo-btn">Undo last</button>
+          <button class="action-btn primary" id="next-hole-2">Next ›</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Round so far</div>
+          <div class="card-sub" id="holes-played-sub">0 holes</div>
+        </div>
+        <div class="stats-grid">
+          <div class="stat">
+            <div class="stat-label">total putts</div>
+            <div class="stat-value" id="live-total">0</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">three-putts</div>
+            <div class="stat-value" id="live-three">0</div>
+          </div>
+        </div>
+        <div class="hole-actions">
+          <button class="action-btn danger" id="discard-round-btn">Discard</button>
+          <button class="action-btn primary" id="finish-round-btn">Finish round</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stats-view" style="display: none;">
+    <div id="stats-content"></div>
+  </div>
+
+  <div id="history-view" style="display: none;">
+    <div id="history-content"></div>
+  </div>
+
+  <div id="practice-view" style="display: none;">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Practice drills</div>
+        <div class="card-sub">Log makes from each drill</div>
+      </div>
+
+      <div class="drill-card">
+        <div class="drill-title">Gate drill · 4 ft</div>
+        <div class="drill-desc">Two tees just wider than putter head. Goal: 20 in a row.</div>
+        <div class="drill-input">
+          <input type="number" id="gate-input" placeholder="Best streak today" min="0" max="100" inputmode="numeric" />
+          <button id="gate-save">Save</button>
+        </div>
+        <div class="drill-last" id="gate-last">No entries yet</div>
+      </div>
+
+      <div class="drill-card">
+        <div class="drill-title">Ladder · lag distance control</div>
+        <div class="drill-desc">9 putts from 30/40/50 ft. How many finished within a putter-length (3 ft) of the hole?</div>
+        <div class="drill-input">
+          <input type="number" id="ladder-input" placeholder="Out of 9" min="0" max="9" inputmode="numeric" />
+          <button id="ladder-save">Save</button>
+        </div>
+        <div class="drill-last" id="ladder-last">No entries yet</div>
+      </div>
+
+      <div class="drill-card">
+        <div class="drill-title">Clock · 6 balls at 4 ft</div>
+        <div class="drill-desc">All six in a row, or restart. How many cycles completed?</div>
+        <div class="drill-input">
+          <input type="number" id="clock-input" placeholder="Cycles completed" min="0" max="50" inputmode="numeric" />
+          <button id="clock-save">Save</button>
+        </div>
+        <div class="drill-last" id="clock-last">No entries yet</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title" style="margin-bottom: 8px;">Data</div>
+      <div class="export-row">
+        <button id="export-btn">Export JSON</button>
+        <button id="import-btn">Import</button>
+        <button id="reset-btn" class="action-btn danger" style="border: 0.5px solid var(--border);">Reset all</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', drills: 'putttrap_drills' };
+
+const state = {
+  activeRound: null,
+  rounds: [],
+  drills: { gate: [], ladder: [], clock: [] },
+  selectedDist: null,
+  pendingMiss: false
+};
+
+const $ = (id) => document.getElementById(id);
+const fmtDate = (iso) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+const fmtDateTime = (iso) => new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+
+function loadFromStorage(key, fallback) {
+  try {
+    const v = localStorage.getItem(key);
+    return v ? JSON.parse(v) : fallback;
+  } catch (e) { return fallback; }
+}
+function saveToStorage(key, val) {
+  try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {}
+}
+
+function loadAll() {
+  state.activeRound = loadFromStorage(STORAGE_KEYS.active, null);
+  state.rounds = loadFromStorage(STORAGE_KEYS.rounds, []);
+  state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
+  ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
+  $('brand-tag').textContent = 'v1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  renderRoundView();
+  renderDrillLast();
+}
+
+function saveActive() { state.activeRound ? saveToStorage(STORAGE_KEYS.active, state.activeRound) : localStorage.removeItem(STORAGE_KEYS.active); }
+function saveRounds() { saveToStorage(STORAGE_KEYS.rounds, state.rounds); }
+function saveDrills() { saveToStorage(STORAGE_KEYS.drills, state.drills); }
+
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  ['round', 'stats', 'history', 'practice'].forEach(v => {
+    $(v + '-view').style.display = v === tab ? 'block' : 'none';
+  });
+  if (tab === 'stats') renderStats();
+  if (tab === 'history') renderHistory();
+  if (tab === 'practice') renderDrillLast();
+}
+
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => switchTab(t.dataset.tab)));
+
+$('start-round-btn').addEventListener('click', () => {
+  state.activeRound = {
+    id: 'r_' + Date.now(),
+    startedAt: new Date().toISOString(),
+    currentHole: 1,
+    putts: {}
+  };
+  for (let i = 1; i <= 18; i++) state.activeRound.putts[i] = [];
+  saveActive();
+  renderRoundView();
+});
+
+$('discard-round-btn').addEventListener('click', () => {
+  if (!confirm('Discard this round? All logged putts will be lost.')) return;
+  state.activeRound = null;
+  saveActive();
+  renderRoundView();
+});
+
+$('finish-round-btn').addEventListener('click', () => {
+  if (!state.activeRound) return;
+  const completed = { ...state.activeRound, finishedAt: new Date().toISOString() };
+  state.rounds.unshift(completed);
+  saveRounds();
+  state.activeRound = null;
+  saveActive();
+  $('brand-tag').textContent = 'v1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  renderRoundView();
+  switchTab('stats');
+});
+
+document.querySelectorAll('.dist-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.dist-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    state.selectedDist = parseInt(b.dataset.dist);
+    $('made-btn').disabled = false;
+    $('missed-btn').disabled = false;
+  });
+});
+
+$('made-btn').addEventListener('click', () => {
+  if (state.selectedDist === null || !state.activeRound) return;
+  state.activeRound.putts[state.activeRound.currentHole].push({ dist: state.selectedDist, made: true, t: Date.now() });
+  saveActive();
+  resetSelection();
+  renderHole();
+  renderLiveStats();
+});
+
+$('missed-btn').addEventListener('click', () => {
+  if (state.selectedDist === null) return;
+  state.pendingMiss = true;
+  $('miss-detail').style.display = 'block';
+});
+
+document.querySelectorAll('.miss-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    if (!state.pendingMiss || !state.activeRound) return;
+    state.activeRound.putts[state.activeRound.currentHole].push({
+      dist: state.selectedDist, made: false, missDir: b.dataset.miss, t: Date.now()
+    });
+    saveActive();
+    resetSelection();
+    renderHole();
+    renderLiveStats();
+  });
+});
+
+function resetSelection() {
+  state.selectedDist = null;
+  state.pendingMiss = false;
+  document.querySelectorAll('.dist-btn').forEach(x => x.classList.remove('selected'));
+  document.querySelectorAll('.miss-btn').forEach(x => x.classList.remove('selected'));
+  $('miss-detail').style.display = 'none';
+  $('made-btn').disabled = true;
+  $('missed-btn').disabled = true;
+}
+
+$('undo-btn').addEventListener('click', () => {
+  if (!state.activeRound) return;
+  state.activeRound.putts[state.activeRound.currentHole].pop();
+  saveActive();
+  renderHole();
+  renderLiveStats();
+});
+
+function goHole(n) {
+  if (!state.activeRound || n < 1 || n > 18) return;
+  state.activeRound.currentHole = n;
+  $('hole-num').textContent = n;
+  $('prev-hole').disabled = n === 1;
+  $('next-hole').disabled = n === 18;
+  saveActive();
+  resetSelection();
+  renderHole();
+}
+
+$('prev-hole').addEventListener('click', () => goHole(state.activeRound.currentHole - 1));
+$('next-hole').addEventListener('click', () => goHole(state.activeRound.currentHole + 1));
+$('next-hole-2').addEventListener('click', () => goHole(state.activeRound.currentHole + 1));
+
+function renderRoundView() {
+  if (state.activeRound) {
+    $('no-round-view').style.display = 'none';
+    $('active-round-view').style.display = 'block';
+    $('active-round-banner').style.display = 'block';
+    $('active-round-banner').textContent = 'Round started ' + fmtDateTime(state.activeRound.startedAt);
+    $('hole-num').textContent = state.activeRound.currentHole;
+    $('prev-hole').disabled = state.activeRound.currentHole === 1;
+    $('next-hole').disabled = state.activeRound.currentHole === 18;
+    renderHole();
+    renderLiveStats();
+  } else {
+    $('no-round-view').style.display = 'block';
+    $('active-round-view').style.display = 'none';
+    $('active-round-banner').style.display = 'none';
+  }
+}
+
+function renderHole() {
+  if (!state.activeRound) return;
+  const putts = state.activeRound.putts[state.activeRound.currentHole];
+  const list = $('putts-list');
+  if (!putts || putts.length === 0) {
+    list.innerHTML = '<div class="empty">No putts logged for this hole</div>';
+    return;
+  }
+  list.innerHTML = putts.map((p, i) => {
+    const distLabel = p.dist === 50 ? '40+ ft' : p.dist <= 3 ? '≤3 ft' : p.dist + ' ft';
+    const result = p.made ? '<span class="made-tag">made</span>' : '<span class="miss-tag">missed ' + p.missDir + '</span>';
+    return '<div class="putt-row"><span>putt ' + (i + 1) + ' · ' + distLabel + '</span>' + result + '</div>';
+  }).join('');
+}
+
+function computeRoundStats(round) {
+  let total = 0, three = 0, shortMakes = 0, shortAttempts = 0, holesPlayed = 0;
+  const misses = { short: 0, long: 0, left: 0, right: 0 };
+  const lagSuccess = { attempts: 0, inside3: 0 };
+  for (let h = 1; h <= 18; h++) {
+    const ps = round.putts[h] || [];
+    if (ps.length > 0) holesPlayed++;
+    total += ps.length;
+    if (ps.length >= 3) three++;
+    ps.forEach((p, idx) => {
+      if (p.dist <= 6) {
+        shortAttempts++;
+        if (p.made) shortMakes++;
+      }
+      if (idx === 0 && p.dist >= 20) {
+        lagSuccess.attempts++;
+        const next = ps[1];
+        if (p.made || (next && next.dist <= 3)) lagSuccess.inside3++;
+      }
+      if (!p.made && p.missDir) misses[p.missDir]++;
+    });
+  }
+  return { total, three, shortMakes, shortAttempts, misses, holesPlayed, lagSuccess };
+}
+
+function renderLiveStats() {
+  if (!state.activeRound) return;
+  const s = computeRoundStats(state.activeRound);
+  $('live-total').textContent = s.total;
+  $('live-three').textContent = s.three;
+  $('holes-played-sub').textContent = s.holesPlayed + (s.holesPlayed === 1 ? ' hole' : ' holes');
+}
+
+function renderStats() {
+  const container = $('stats-content');
+  const rounds = state.activeRound ? [state.activeRound, ...state.rounds] : state.rounds;
+  if (rounds.length === 0) {
+    container.innerHTML = '<div class="card"><div class="empty">No rounds yet. Start a round on the Round tab.</div></div>';
+    return;
+  }
+  const latest = rounds[0];
+  const s = computeRoundStats(latest);
+  const isActive = state.activeRound && rounds[0] === state.activeRound;
+
+  let trendHtml = '';
+  if (state.rounds.length >= 2) {
+    const recent = state.rounds.slice(0, 6).reverse();
+    const max = Math.max(...recent.map(r => computeRoundStats(r).total));
+    const bars = recent.map((r, i) => {
+      const rs = computeRoundStats(r);
+      const h = Math.max(4, Math.round((rs.total / max) * 60));
+      const cls = i === recent.length - 1 ? '' : ' older';
+      return '<div class="trend-bar' + cls + '" style="height: ' + h + 'px;" title="' + rs.total + ' putts"></div>';
+    }).join('');
+    const labels = recent.map(r => '<span>' + fmtDate(r.startedAt) + '</span>').join('');
+    trendHtml = '<div class="card"><div class="card-header"><div class="card-title">Putt trend</div><div class="card-sub">last ' + recent.length + ' rounds</div></div><div class="trend">' + bars + '</div><div class="trend-labels">' + labels + '</div></div>';
+  }
+
+  const dominantMiss = Object.entries(s.misses).sort((a,b) => b[1] - a[1])[0];
+  const shortPct = s.shortAttempts > 0 ? Math.round(s.shortMakes / s.shortAttempts * 100) : null;
+  const lagPct = s.lagSuccess.attempts > 0 ? Math.round(s.lagSuccess.inside3 / s.lagSuccess.attempts * 100) : null;
+  const avg = s.holesPlayed > 0 ? (s.total / s.holesPlayed) : null;
+
+  const missCells = ['short','long','left','right'].map(d => {
+    const isDom = dominantMiss && dominantMiss[0] === d && dominantMiss[1] > 0;
+    return '<div class="miss-cell' + (isDom ? ' dominant' : '') + '"><strong>' + s.misses[d] + '</strong>' + d + '</div>';
+  }).join('');
+
+  const promptText = 'Analyze my latest PuttTrap round: ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts, miss pattern short=' + s.misses.short + ' long=' + s.misses.long + ' left=' + s.misses.left + ' right=' + s.misses.right + (lagPct !== null ? ', lag success ' + lagPct + '%' : '') + (shortPct !== null ? ', short-putt make rate ' + shortPct + '%' : '') + '. What should I work on?';
+
+  container.innerHTML = trendHtml + '<div class="card"><div class="card-header"><div><div class="card-title">' + (isActive ? 'Round in progress' : 'Latest round') + '</div><div class="card-sub">' + fmtDate(latest.startedAt) + ' · ' + s.holesPlayed + ' holes</div></div></div>' +
+    '<div class="stats-grid">' +
+    '<div class="stat"><div class="stat-label">total putts</div><div class="stat-value">' + s.total + '</div><div class="stat-sub">target: under 38</div></div>' +
+    '<div class="stat"><div class="stat-label">three-putts</div><div class="stat-value">' + s.three + '</div><div class="stat-sub">target: under 4</div></div>' +
+    '<div class="stat"><div class="stat-label">avg per hole</div><div class="stat-value">' + (avg !== null ? avg.toFixed(2) : '—') + '</div><div class="stat-sub">target: 2.10</div></div>' +
+    '<div class="stat"><div class="stat-label">≤6 ft make %</div><div class="stat-value">' + (shortPct !== null ? shortPct + '%' : '—') + '</div><div class="stat-sub">target: 70%+</div></div>' +
+    '</div>' +
+    '<div class="section-label" style="margin-top: 16px;">miss pattern</div>' +
+    '<div class="miss-chart">' + missCells + '</div>' +
+    '<div class="section-label" style="margin-top: 16px;">lag putt control</div>' +
+    '<div class="lag-line">' + (lagPct !== null ? lagPct + '% of long first putts (20 ft+) finished inside 3 ft &nbsp;·&nbsp; ' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts : 'No long first putts logged yet') + '</div>' +
+    '<button class="followup" data-prompt="' + encodeURIComponent(promptText) + '" id="coach-btn">Get a coaching read on this round ↗</button>' +
+    '</div>';
+
+  const coachBtn = $('coach-btn');
+  if (coachBtn) coachBtn.addEventListener('click', () => {
+    const text = decodeURIComponent(coachBtn.dataset.prompt);
+    navigator.clipboard.writeText(text).then(() => {
+      coachBtn.textContent = 'Copied — paste into Claude ✓';
+      setTimeout(() => { coachBtn.textContent = 'Get a coaching read on this round ↗'; }, 2400);
+    }).catch(() => {
+      alert(text);
+    });
+  });
+}
+
+function renderHistory() {
+  const container = $('history-content');
+  if (state.rounds.length === 0) {
+    container.innerHTML = '<div class="card"><div class="empty">No completed rounds yet.</div></div>';
+    return;
+  }
+  container.innerHTML = '<div class="card"><div class="card-header"><div class="card-title">Completed rounds</div><div class="card-sub">' + state.rounds.length + ' total</div></div><div class="rounds-list">' +
+    state.rounds.map(r => {
+      const s = computeRoundStats(r);
+      return '<div class="round-row"><div><div class="round-date">' + fmtDate(r.startedAt) + '</div><div class="round-sub">' + s.holesPlayed + ' holes · avg ' + (s.holesPlayed > 0 ? (s.total/s.holesPlayed).toFixed(2) : '—') + '</div></div><div class="round-stats"><div class="round-stat"><div class="round-stat-val">' + s.total + '</div><div class="round-stat-lbl">putts</div></div><div class="round-stat"><div class="round-stat-val">' + s.three + '</div><div class="round-stat-lbl">3-putts</div></div></div></div>';
+    }).join('') +
+    '</div></div>';
+}
+
+['gate', 'ladder', 'clock'].forEach(drill => {
+  $(drill + '-save').addEventListener('click', () => {
+    const input = $(drill + '-input');
+    const val = parseInt(input.value);
+    if (isNaN(val) || val < 0) return;
+    state.drills[drill].unshift({ value: val, t: Date.now() });
+    if (state.drills[drill].length > 60) state.drills[drill] = state.drills[drill].slice(0, 60);
+    saveDrills();
+    input.value = '';
+    renderDrillLast();
+  });
+});
+
+function renderDrillLast() {
+  ['gate', 'ladder', 'clock'].forEach(drill => {
+    const entries = state.drills[drill];
+    if (!entries || entries.length === 0) {
+      $(drill + '-last').textContent = 'No entries yet';
+      return;
+    }
+    const last = entries[0];
+    const recent = entries.slice(0, 5);
+    const avg = recent.reduce((a, e) => a + e.value, 0) / recent.length;
+    $(drill + '-last').textContent = 'Last: ' + last.value + ' · 5-session avg: ' + avg.toFixed(1) + ' · ' + entries.length + ' session' + (entries.length === 1 ? '' : 's') + ' total';
+  });
+}
+
+$('export-btn').addEventListener('click', () => {
+  const data = { exportedAt: new Date().toISOString(), version: 1, rounds: state.rounds, drills: state.drills, activeRound: state.activeRound };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'putttrap-' + new Date().toISOString().slice(0, 10) + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+$('import-btn').addEventListener('click', () => {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'application/json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      try {
+        const data = JSON.parse(ev.target.result);
+        if (!confirm('Import will replace all current data. Continue?')) return;
+        if (data.rounds) { state.rounds = data.rounds; saveRounds(); }
+        if (data.drills) { state.drills = data.drills; saveDrills(); }
+        if (data.activeRound) { state.activeRound = data.activeRound; saveActive(); }
+        loadAll();
+        alert('Imported successfully.');
+      } catch (err) { alert('Invalid file: ' + err.message); }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+});
+
+$('reset-btn').addEventListener('click', () => {
+  if (!confirm('Erase ALL rounds, drills, and active round? This cannot be undone.')) return;
+  Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
+  state.activeRound = null;
+  state.rounds = [];
+  state.drills = { gate: [], ladder: [], clock: [] };
+  loadAll();
+});
+
+loadAll();
+</script>
+</body>
+</html>
