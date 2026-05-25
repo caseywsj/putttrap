@@ -82,9 +82,15 @@
   .result-btn.made { background: var(--green-bg); border-color: var(--green-border); color: var(--green-ink); }
   .result-btn.missed { background: var(--red-bg); border-color: var(--red-border); color: var(--red-ink); }
   .result-btn:disabled { opacity: 0.4; }
-  .miss-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 8px; }
-  .miss-btn { padding: 11px; font-size: 12px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
-  .miss-btn.selected { background: var(--surface-2); border-color: var(--border-strong); }
+  .target-wrap { margin-top: 8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); }
+  .target-help { font-size: 11px; color: var(--ink-2); text-align: center; margin-bottom: 10px; }
+  .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; max-width: 260px; aspect-ratio: 1; margin: 0 auto; position: relative; }
+  .target-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.2; color: var(--ink-2); border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); cursor: pointer; padding: 4px; text-align: center; min-height: 0; }
+  .target-cell.selected { background: var(--amber); color: white; border-color: var(--amber); }
+  .target-cell-axis { font-size: 10px; opacity: 0.85; }
+  .target-pin { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-bottom: 3px; box-shadow: 0 0 0 2px var(--surface); }
+  .target-cell.selected .target-pin { background: white; box-shadow: 0 0 0 2px var(--amber); }
+  .target-axis-label { font-size: 9px; color: var(--ink-3); text-align: center; }
   .putts-list { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
   .putt-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; }
   .made-tag { color: var(--green-ink); font-weight: 500; }
@@ -138,7 +144,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1</div>
+    <div class="brand-tag" id="brand-tag">v1.1</div>
   </div>
 
   <div class="tabs">
@@ -190,12 +196,21 @@
         </div>
 
         <div id="miss-detail" style="display: none;">
-          <div class="section-label" style="margin-top: 10px;">miss direction</div>
-          <div class="miss-grid" id="miss-grid">
-            <button class="miss-btn" data-miss="short">Short</button>
-            <button class="miss-btn" data-miss="long">Long</button>
-            <button class="miss-btn" data-miss="left">Left</button>
-            <button class="miss-btn" data-miss="right">Right</button>
+          <div class="section-label" style="margin-top: 10px;">where did it end up?</div>
+          <div class="target-wrap">
+            <div class="target-help">Tap the cell matching where the ball stopped relative to the hole. The pin is the hole.</div>
+            <div class="target-grid" id="target-grid">
+              <button class="target-cell" data-d="long" data-l="left"><span class="target-cell-axis">long</span><span class="target-cell-axis">left</span></button>
+              <button class="target-cell" data-d="long" data-l="center"><span class="target-cell-axis">long</span></button>
+              <button class="target-cell" data-d="long" data-l="right"><span class="target-cell-axis">long</span><span class="target-cell-axis">right</span></button>
+              <button class="target-cell" data-d="center" data-l="left"><span class="target-cell-axis">left</span></button>
+              <button class="target-cell center" data-d="center" data-l="center"><div class="target-pin"></div><span class="target-cell-axis">on line</span></button>
+              <button class="target-cell" data-d="center" data-l="right"><span class="target-cell-axis">right</span></button>
+              <button class="target-cell" data-d="short" data-l="left"><span class="target-cell-axis">short</span><span class="target-cell-axis">left</span></button>
+              <button class="target-cell" data-d="short" data-l="center"><span class="target-cell-axis">short</span></button>
+              <button class="target-cell" data-d="short" data-l="right"><span class="target-cell-axis">short</span><span class="target-cell-axis">right</span></button>
+            </div>
+            <div class="target-axis-label" style="margin-top: 8px;">you · putting from below</div>
           </div>
         </div>
 
@@ -319,7 +334,7 @@ function loadAll() {
   state.rounds = loadFromStorage(STORAGE_KEYS.rounds, []);
   state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
-  $('brand-tag').textContent = 'v1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -366,7 +381,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.1 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -396,11 +411,17 @@ $('missed-btn').addEventListener('click', () => {
   $('miss-detail').style.display = 'block';
 });
 
-document.querySelectorAll('.miss-btn').forEach(b => {
+document.querySelectorAll('.target-cell').forEach(b => {
   b.addEventListener('click', () => {
     if (!state.pendingMiss || !state.activeRound) return;
+    const distAxis = b.dataset.d;
+    const lineAxis = b.dataset.l;
+    if (distAxis === 'center' && lineAxis === 'center') return;
     state.activeRound.putts[state.activeRound.currentHole].push({
-      dist: state.selectedDist, made: false, missDir: b.dataset.miss, t: Date.now()
+      dist: state.selectedDist, made: false,
+      missDist: distAxis, missLine: lineAxis,
+      missDir: distAxis !== 'center' ? distAxis : lineAxis,
+      t: Date.now()
     });
     saveActive();
     resetSelection();
@@ -413,7 +434,7 @@ function resetSelection() {
   state.selectedDist = null;
   state.pendingMiss = false;
   document.querySelectorAll('.dist-btn').forEach(x => x.classList.remove('selected'));
-  document.querySelectorAll('.miss-btn').forEach(x => x.classList.remove('selected'));
+  document.querySelectorAll('.target-cell').forEach(x => x.classList.remove('selected'));
   $('miss-detail').style.display = 'none';
   $('made-btn').disabled = true;
   $('missed-btn').disabled = true;
@@ -470,13 +491,25 @@ function renderHole() {
   }
   list.innerHTML = putts.map((p, i) => {
     const distLabel = p.dist === 50 ? '40+ ft' : p.dist <= 3 ? '≤3 ft' : p.dist + ' ft';
-    const result = p.made ? '<span class="made-tag">made</span>' : '<span class="miss-tag">missed ' + p.missDir + '</span>';
+    let result;
+    if (p.made) {
+      result = '<span class="made-tag">made</span>';
+    } else if (p.missDist || p.missLine) {
+      const parts = [];
+      if (p.missDist && p.missDist !== 'center') parts.push(p.missDist);
+      if (p.missLine && p.missLine !== 'center') parts.push(p.missLine);
+      result = '<span class="miss-tag">missed ' + (parts.join(' + ') || p.missDir || '') + '</span>';
+    } else {
+      result = '<span class="miss-tag">missed ' + (p.missDir || '') + '</span>';
+    }
     return '<div class="putt-row"><span>putt ' + (i + 1) + ' · ' + distLabel + '</span>' + result + '</div>';
   }).join('');
 }
 
 function computeRoundStats(round) {
   let total = 0, three = 0, shortMakes = 0, shortAttempts = 0, holesPlayed = 0;
+  const speed = { short: 0, long: 0, center: 0 };
+  const line = { left: 0, right: 0, center: 0 };
   const misses = { short: 0, long: 0, left: 0, right: 0 };
   const lagSuccess = { attempts: 0, inside3: 0 };
   for (let h = 1; h <= 18; h++) {
@@ -494,10 +527,20 @@ function computeRoundStats(round) {
         const next = ps[1];
         if (p.made || (next && next.dist <= 3)) lagSuccess.inside3++;
       }
-      if (!p.made && p.missDir) misses[p.missDir]++;
+      if (!p.made) {
+        if (p.missDist && speed[p.missDist] !== undefined) speed[p.missDist]++;
+        if (p.missLine && line[p.missLine] !== undefined) line[p.missLine]++;
+        if (p.missDist === 'short' || p.missDist === 'long') misses[p.missDist]++;
+        if (p.missLine === 'left' || p.missLine === 'right') misses[p.missLine]++;
+        if (!p.missDist && !p.missLine && p.missDir) {
+          if (speed[p.missDir] !== undefined) speed[p.missDir]++;
+          if (line[p.missDir] !== undefined) line[p.missDir]++;
+          if (misses[p.missDir] !== undefined) misses[p.missDir]++;
+        }
+      }
     });
   }
-  return { total, three, shortMakes, shortAttempts, misses, holesPlayed, lagSuccess };
+  return { total, three, shortMakes, shortAttempts, misses, speed, line, holesPlayed, lagSuccess };
 }
 
 function renderLiveStats() {
@@ -533,17 +576,36 @@ function renderStats() {
     trendHtml = '<div class="card"><div class="card-header"><div class="card-title">Putt trend</div><div class="card-sub">last ' + recent.length + ' rounds</div></div><div class="trend">' + bars + '</div><div class="trend-labels">' + labels + '</div></div>';
   }
 
-  const dominantMiss = Object.entries(s.misses).sort((a,b) => b[1] - a[1])[0];
   const shortPct = s.shortAttempts > 0 ? Math.round(s.shortMakes / s.shortAttempts * 100) : null;
   const lagPct = s.lagSuccess.attempts > 0 ? Math.round(s.lagSuccess.inside3 / s.lagSuccess.attempts * 100) : null;
   const avg = s.holesPlayed > 0 ? (s.total / s.holesPlayed) : null;
 
-  const missCells = ['short','long','left','right'].map(d => {
-    const isDom = dominantMiss && dominantMiss[0] === d && dominantMiss[1] > 0;
-    return '<div class="miss-cell' + (isDom ? ' dominant' : '') + '"><strong>' + s.misses[d] + '</strong>' + d + '</div>';
+  const speedTotal = s.speed.short + s.speed.long;
+  const lineTotal = s.line.left + s.line.right;
+  const speedDom = s.speed.short > s.speed.long ? 'short' : s.speed.long > s.speed.short ? 'long' : null;
+  const lineDom = s.line.left > s.line.right ? 'left' : s.line.right > s.line.left ? 'right' : null;
+
+  const speedCells = ['short', 'long'].map(d => {
+    const isDom = speedDom === d;
+    return '<div class="miss-cell' + (isDom ? ' dominant' : '') + '"><strong>' + s.speed[d] + '</strong>' + d + '</div>';
+  }).join('');
+  const lineCells = ['left', 'right'].map(d => {
+    const isDom = lineDom === d;
+    return '<div class="miss-cell' + (isDom ? ' dominant' : '') + '"><strong>' + s.line[d] + '</strong>' + d + '</div>';
   }).join('');
 
-  const promptText = 'Analyze my latest PuttTrap round: ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts, miss pattern short=' + s.misses.short + ' long=' + s.misses.long + ' left=' + s.misses.left + ' right=' + s.misses.right + (lagPct !== null ? ', lag success ' + lagPct + '%' : '') + (shortPct !== null ? ', short-putt make rate ' + shortPct + '%' : '') + '. What should I work on?';
+  let diagnosis = '';
+  if (speedTotal + lineTotal >= 4) {
+    if (speedTotal > lineTotal * 1.5) {
+      diagnosis = 'Speed-dominant misses (' + speedTotal + ' speed vs ' + lineTotal + ' direction). Lag distance control is the priority.';
+    } else if (lineTotal > speedTotal * 1.5) {
+      diagnosis = 'Direction-dominant misses (' + lineTotal + ' direction vs ' + speedTotal + ' speed). Aim and stroke path are the priority.';
+    } else {
+      diagnosis = 'Mixed misses (' + speedTotal + ' speed, ' + lineTotal + ' direction). Both axes need work — but speed errors create three-putts faster.';
+    }
+  }
+
+  const promptText = 'Analyze my latest PuttTrap round: ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts. Speed misses: short=' + s.speed.short + ' long=' + s.speed.long + '. Direction misses: left=' + s.line.left + ' right=' + s.line.right + '.' + (lagPct !== null ? ' Lag success ' + lagPct + '%.' : '') + (shortPct !== null ? ' Short-putt make rate ' + shortPct + '%.' : '') + ' What should I work on?';
 
   container.innerHTML = trendHtml + '<div class="card"><div class="card-header"><div><div class="card-title">' + (isActive ? 'Round in progress' : 'Latest round') + '</div><div class="card-sub">' + fmtDate(latest.startedAt) + ' · ' + s.holesPlayed + ' holes</div></div></div>' +
     '<div class="stats-grid">' +
@@ -552,8 +614,11 @@ function renderStats() {
     '<div class="stat"><div class="stat-label">avg per hole</div><div class="stat-value">' + (avg !== null ? avg.toFixed(2) : '—') + '</div><div class="stat-sub">target: 2.10</div></div>' +
     '<div class="stat"><div class="stat-label">≤6 ft make %</div><div class="stat-value">' + (shortPct !== null ? shortPct + '%' : '—') + '</div><div class="stat-sub">target: 70%+</div></div>' +
     '</div>' +
-    '<div class="section-label" style="margin-top: 16px;">miss pattern</div>' +
-    '<div class="miss-chart">' + missCells + '</div>' +
+    '<div class="section-label" style="margin-top: 16px;">speed misses</div>' +
+    '<div class="miss-chart">' + speedCells + '</div>' +
+    '<div class="section-label" style="margin-top: 14px;">direction misses</div>' +
+    '<div class="miss-chart">' + lineCells + '</div>' +
+    (diagnosis ? '<div class="lag-line" style="margin-top: 12px; padding: 10px 12px; background: var(--amber-bg); color: var(--amber-ink); border-radius: var(--radius-md); font-size: 12px;">' + diagnosis + '</div>' : '') +
     '<div class="section-label" style="margin-top: 16px;">lag putt control</div>' +
     '<div class="lag-line">' + (lagPct !== null ? lagPct + '% of long first putts (20 ft+) finished inside 3 ft &nbsp;·&nbsp; ' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts : 'No long first putts logged yet') + '</div>' +
     '<button class="followup" data-prompt="' + encodeURIComponent(promptText) + '" id="coach-btn">Get a coaching read on this round ↗</button>' +
