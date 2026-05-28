@@ -144,6 +144,36 @@
   .read-slope-btn { padding: 12px 4px; font-size: 13px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); text-align: center; line-height: 1.2; }
   .read-slope-btn.selected { background: var(--amber); color: white; border-color: var(--amber); }
   .read-slope-btn small { display: block; font-size: 9px; opacity: 0.7; margin-top: 2px; }
+  .cal-intro { font-size: 12px; color: var(--ink-2); line-height: 1.5; margin-bottom: 14px; }
+  .cal-guess-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 6px; }
+  .cal-guess-btn { padding: 14px 4px; font-size: 15px; font-weight: 500; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); }
+  .cal-guess-btn.selected { background: var(--amber); color: white; border-color: var(--amber); }
+  .cal-enable { width: 100%; padding: 13px; font-size: 14px; font-weight: 500; border: 0.5px solid var(--amber); background: var(--amber); color: white; border-radius: var(--radius-md); cursor: pointer; margin-top: 6px; }
+  .cal-enable:disabled { opacity: 0.4; }
+  .cal-level { text-align: center; padding: 20px; background: var(--surface-2); border-radius: var(--radius-md); margin-top: 12px; }
+  .cal-level-bubble-wrap { position: relative; width: 120px; height: 120px; margin: 0 auto 14px; border-radius: 50%; border: 1.5px solid var(--border-strong); background: var(--surface); overflow: hidden; }
+  .cal-level-ring { position: absolute; top: 50%; left: 50%; width: 40px; height: 40px; transform: translate(-50%, -50%); border-radius: 50%; border: 1px dashed var(--border-strong); }
+  .cal-level-bubble { position: absolute; width: 20px; height: 20px; border-radius: 50%; background: var(--amber); top: 50%; left: 50%; transform: translate(-50%, -50%); transition: transform 0.08s linear; box-shadow: 0 0 0 3px var(--amber-bg); }
+  .cal-level-reading { font-family: var(--font-serif); font-size: 36px; font-weight: 500; line-height: 1; }
+  .cal-level-reading-sub { font-size: 11px; color: var(--ink-2); margin-top: 4px; }
+  .cal-result { padding: 16px; border-radius: var(--radius-md); margin-top: 12px; text-align: center; }
+  .cal-result.good { background: var(--green-bg); }
+  .cal-result.close { background: var(--amber-bg); }
+  .cal-result.off { background: var(--red-bg); }
+  .cal-result-headline { font-family: var(--font-serif); font-size: 20px; font-weight: 500; margin-bottom: 6px; }
+  .cal-result.good .cal-result-headline { color: var(--green-ink); }
+  .cal-result.close .cal-result-headline { color: var(--amber-ink); }
+  .cal-result.off .cal-result-headline { color: var(--red-ink); }
+  .cal-result-detail { font-size: 12px; line-height: 1.5; }
+  .cal-result.good .cal-result-detail { color: var(--green-ink); }
+  .cal-result.close .cal-result-detail { color: var(--amber-ink); }
+  .cal-result.off .cal-result-detail { color: var(--red-ink); }
+  .cal-accuracy { display: flex; justify-content: space-around; margin-top: 14px; padding-top: 14px; border-top: 0.5px solid var(--border); }
+  .cal-acc-stat { text-align: center; }
+  .cal-acc-val { font-family: var(--font-serif); font-size: 22px; font-weight: 500; }
+  .cal-acc-lbl { font-size: 10px; color: var(--ink-2); margin-top: 2px; }
+  .cal-again { width: 100%; padding: 11px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); margin-top: 12px; }
+  .cal-unsupported { padding: 12px; background: var(--red-bg); color: var(--red-ink); border-radius: var(--radius-md); font-size: 12px; line-height: 1.5; }
   .read-intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .read-intent-btn { padding: 13px 8px; font-size: 13px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); text-align: center; line-height: 1.3; }
   .read-intent-btn.selected { background: var(--amber); color: white; border-color: var(--amber); }
@@ -170,7 +200,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.3</div>
+    <div class="brand-tag" id="brand-tag">v1.4</div>
   </div>
 
   <div class="tabs">
@@ -343,6 +373,51 @@
     <div class="card">
       <div class="card-header">
         <div>
+          <div class="card-title">Slope trainer</div>
+          <div class="card-sub">guess first, then check · teach the eye</div>
+        </div>
+      </div>
+      <div class="cal-intro">Read the slope with your eye. Lock in your guess. <em>Then</em> lay the phone flat on the green along the fall line and reveal the truth. Over time your guesses close in on the level — and you won't need the phone on the course.</div>
+
+      <div id="cal-stage-guess">
+        <div class="read-step-label" style="margin-bottom: 8px;">your read</div>
+        <div class="cal-guess-grid">
+          <button class="cal-guess-btn" data-guess="1">1%</button>
+          <button class="cal-guess-btn" data-guess="2">2%</button>
+          <button class="cal-guess-btn" data-guess="3">3%</button>
+          <button class="cal-guess-btn" data-guess="4">4%</button>
+        </div>
+        <button class="cal-enable" id="cal-enable" disabled>Lock guess &amp; reveal level</button>
+      </div>
+
+      <div id="cal-stage-level" style="display: none;">
+        <div class="cal-level">
+          <div class="cal-level-bubble-wrap">
+            <div class="cal-level-ring"></div>
+            <div class="cal-level-bubble" id="cal-bubble"></div>
+          </div>
+          <div class="cal-level-reading"><span id="cal-reading">0.0</span>%</div>
+          <div class="cal-level-reading-sub">lay phone flat on the green · hold steady</div>
+        </div>
+        <button class="cal-again" id="cal-capture">Capture this reading</button>
+      </div>
+
+      <div id="cal-stage-result" style="display: none;"></div>
+
+      <div id="cal-unsupported" class="cal-unsupported" style="display: none;">
+        Motion sensors aren't available here. This needs Safari on an iPhone over HTTPS (your GitHub Pages URL works; a desktop browser won't).
+      </div>
+
+      <div class="cal-accuracy" id="cal-accuracy" style="display: none;">
+        <div class="cal-acc-stat"><div class="cal-acc-val" id="cal-acc-avg">—</div><div class="cal-acc-lbl">avg error (last 10)</div></div>
+        <div class="cal-acc-stat"><div class="cal-acc-val" id="cal-acc-count">0</div><div class="cal-acc-lbl">reads logged</div></div>
+        <div class="cal-acc-stat"><div class="cal-acc-val" id="cal-acc-best">—</div><div class="cal-acc-lbl">spot-on rate</div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <div>
           <div class="card-title">Slope reference</div>
           <div class="card-sub">if you don't have a measurement tool</div>
         </div>
@@ -406,12 +481,13 @@
 </div>
 
 <script>
-const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', drills: 'putttrap_drills' };
+const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', drills: 'putttrap_drills', cal: 'putttrap_cal' };
 
 const state = {
   activeRound: null,
   rounds: [],
   drills: { gate: [], ladder: [], clock: [] },
+  cal: [],
   selectedDist: null,
   pendingMiss: false
 };
@@ -434,8 +510,10 @@ function loadAll() {
   state.activeRound = loadFromStorage(STORAGE_KEYS.active, null);
   state.rounds = loadFromStorage(STORAGE_KEYS.rounds, []);
   state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
+  state.cal = loadFromStorage(STORAGE_KEYS.cal, []);
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
-  $('brand-tag').textContent = 'v1.3 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  if (!Array.isArray(state.cal)) state.cal = [];
+  $('brand-tag').textContent = 'v1.4 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -443,6 +521,7 @@ function loadAll() {
 function saveActive() { state.activeRound ? saveToStorage(STORAGE_KEYS.active, state.activeRound) : localStorage.removeItem(STORAGE_KEYS.active); }
 function saveRounds() { saveToStorage(STORAGE_KEYS.rounds, state.rounds); }
 function saveDrills() { saveToStorage(STORAGE_KEYS.drills, state.drills); }
+function saveCal() { saveToStorage(STORAGE_KEYS.cal, state.cal); }
 
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -483,7 +562,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.3 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.4 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -802,7 +881,7 @@ function renderDrillLast() {
 }
 
 $('export-btn').addEventListener('click', () => {
-  const data = { exportedAt: new Date().toISOString(), version: 1, rounds: state.rounds, drills: state.drills, activeRound: state.activeRound };
+  const data = { exportedAt: new Date().toISOString(), version: 2, rounds: state.rounds, drills: state.drills, cal: state.cal, activeRound: state.activeRound };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -826,6 +905,7 @@ $('import-btn').addEventListener('click', () => {
         if (!confirm('Import will replace all current data. Continue?')) return;
         if (data.rounds) { state.rounds = data.rounds; saveRounds(); }
         if (data.drills) { state.drills = data.drills; saveDrills(); }
+        if (data.cal) { state.cal = data.cal; saveCal(); }
         if (data.activeRound) { state.activeRound = data.activeRound; saveActive(); }
         loadAll();
         alert('Imported successfully.');
@@ -842,6 +922,7 @@ $('reset-btn').addEventListener('click', () => {
   state.activeRound = null;
   state.rounds = [];
   state.drills = { gate: [], ladder: [], clock: [] };
+  state.cal = [];
   loadAll();
 });
 
@@ -851,19 +932,6 @@ function computeBreak() {
   const baseInches = (readState.paces * 2 - 1) * readState.slope;
   const intentMult = readState.intent === 'lag' ? 1.3 : 1.0;
   return Math.max(0, Math.round(baseInches * intentMult));
-}
-
-function renderRead() {
-  const distFeet = Math.round(readState.paces * readState.paceFeet);
-  $('pace-num').textContent = readState.paces;
-  $('pace-sub').textContent = '≈ ' + distFeet + ' ft';
-  const inches = computeBreak();
-  $('result-inches').textContent = inches;
-  const sideWord = readState.side === 'right' ? 'right' : 'left';
-  const intentLine = readState.intent === 'make'
-    ? 'Aim ' + inches + ' inches ' + sideWord + ' of the cup. Hit it to finish ~12″ past.'
-    : 'Aim ' + inches + ' inches ' + sideWord + ' of the cup. Die-it-in pace — falls in or stops close.';
-  $('result-aim').textContent = intentLine;
 }
 
 $('pace-minus').addEventListener('click', () => {
@@ -896,6 +964,174 @@ document.querySelectorAll('.read-side-btn').forEach(b => {
     renderRead();
   });
 });
+
+// ---- Slope trainer (guess -> level -> log the gap) ----
+const calState = { guess: null, listening: false, currentSlope: 0, handler: null };
+
+function tiltToSlopePct(beta, gamma) {
+  // beta = front/back tilt, gamma = left/right tilt, both in degrees.
+  // Combined tilt from horizontal: the magnitude of the gradient.
+  const b = (beta || 0) * Math.PI / 180;
+  const g = (gamma || 0) * Math.PI / 180;
+  // tan of combined tilt angle = sqrt(tan^2(beta) + tan^2(gamma))
+  const tanCombined = Math.sqrt(Math.tan(b) * Math.tan(b) + Math.tan(g) * Math.tan(g));
+  return tanCombined * 100; // slope percent
+}
+
+document.querySelectorAll('.cal-guess-btn').forEach(b => {
+  b.addEventListener('click', () => {
+    document.querySelectorAll('.cal-guess-btn').forEach(x => x.classList.remove('selected'));
+    b.classList.add('selected');
+    calState.guess = parseInt(b.dataset.guess);
+    $('cal-enable').disabled = false;
+  });
+});
+
+function startLevel() {
+  const onOrient = (e) => {
+    if (e.beta === null && e.gamma === null) return;
+    const slope = tiltToSlopePct(e.beta, e.gamma);
+    calState.currentSlope = slope;
+    $('cal-reading').textContent = slope.toFixed(1);
+    // Move bubble: map gamma/beta to offset within the 120px circle (clamped)
+    const maxDeg = 6; // full deflection at ~6 degrees
+    const gx = Math.max(-1, Math.min(1, (e.gamma || 0) / maxDeg));
+    const gy = Math.max(-1, Math.min(1, (e.beta || 0) / maxDeg));
+    const r = 44; // px radius of travel
+    const bubble = $('cal-bubble');
+    if (bubble) bubble.style.transform = 'translate(calc(-50% + ' + (gx * r) + 'px), calc(-50% + ' + (gy * r) + 'px))';
+  };
+  calState.handler = onOrient;
+  window.addEventListener('deviceorientation', onOrient, true);
+  calState.listening = true;
+}
+
+function stopLevel() {
+  if (calState.handler) {
+    window.removeEventListener('deviceorientation', calState.handler, true);
+    calState.handler = null;
+  }
+  calState.listening = false;
+}
+
+$('cal-enable').addEventListener('click', async () => {
+  if (calState.guess === null) return;
+  if (!('DeviceOrientationEvent' in window)) {
+    $('cal-stage-guess').style.display = 'none';
+    $('cal-unsupported').style.display = 'block';
+    return;
+  }
+  // iOS 13+ requires explicit permission, triggered by this tap.
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try {
+      const perm = await DeviceOrientationEvent.requestPermission();
+      if (perm !== 'granted') {
+        $('cal-stage-guess').style.display = 'none';
+        $('cal-unsupported').style.display = 'block';
+        $('cal-unsupported').textContent = 'Permission denied. Enable Motion & Orientation Access in Safari settings, or tap to try again.';
+        return;
+      }
+    } catch (err) {
+      $('cal-stage-guess').style.display = 'none';
+      $('cal-unsupported').style.display = 'block';
+      return;
+    }
+  }
+  $('cal-stage-guess').style.display = 'none';
+  $('cal-stage-level').style.display = 'block';
+  startLevel();
+});
+
+$('cal-capture').addEventListener('click', () => {
+  const actual = calState.currentSlope;
+  const actualRounded = Math.round(actual); // nearest whole percent, to compare to the 1-4 guess scale
+  const guess = calState.guess;
+  const error = Math.abs(actual - guess);
+  stopLevel();
+
+  state.cal.unshift({ guess: guess, actual: Math.round(actual * 10) / 10, error: Math.round(error * 10) / 10, t: Date.now() });
+  if (state.cal.length > 200) state.cal = state.cal.slice(0, 200);
+  saveCal();
+
+  // Verdict
+  let cls, headline, detail;
+  if (error < 0.5) {
+    cls = 'good';
+    headline = 'Spot on';
+    detail = 'Your eye read ' + guess + '%, the green is ' + actual.toFixed(1) + '%. Trust that read on the course.';
+  } else if (error < 1.25) {
+    cls = 'close';
+    const dir = actual > guess ? 'more' : 'less';
+    headline = 'Close — off by ' + error.toFixed(1) + '%';
+    detail = 'You read ' + guess + '%, actual is ' + actual.toFixed(1) + '%. The slope is ' + dir + ' than your eye saw. Note the feel and try another.';
+  } else {
+    cls = 'off';
+    const dir = actual > guess ? 'underplayed' : 'overplayed';
+    headline = 'Off by ' + error.toFixed(1) + '%';
+    detail = 'You read ' + guess + '%, actual is ' + actual.toFixed(1) + '%. You ' + dir + ' it — your eye ' + (actual > guess ? 'misses slope that\'s really there' : 'sees slope that isn\'t there') + '. This is the gap to close.';
+  }
+
+  const resultEl = $('cal-stage-result');
+  resultEl.className = 'cal-result ' + cls;
+  resultEl.style.display = 'block';
+  resultEl.innerHTML = '<div class="cal-result-headline">' + headline + '</div><div class="cal-result-detail">' + detail + '</div>';
+  $('cal-stage-level').style.display = 'none';
+
+  renderCalAccuracy();
+
+  // Add a "go again" button
+  if (!$('cal-again-btn')) {
+    const again = document.createElement('button');
+    again.className = 'cal-again';
+    again.id = 'cal-again-btn';
+    again.textContent = 'Read another slope';
+    again.addEventListener('click', resetCal);
+    resultEl.after(again);
+  }
+});
+
+function resetCal() {
+  calState.guess = null;
+  calState.currentSlope = 0;
+  document.querySelectorAll('.cal-guess-btn').forEach(x => x.classList.remove('selected'));
+  $('cal-enable').disabled = true;
+  $('cal-stage-result').style.display = 'none';
+  $('cal-stage-result').innerHTML = '';
+  const againBtn = $('cal-again-btn');
+  if (againBtn) againBtn.remove();
+  $('cal-stage-level').style.display = 'none';
+  $('cal-stage-guess').style.display = 'block';
+}
+
+function renderCalAccuracy() {
+  if (state.cal.length === 0) {
+    $('cal-accuracy').style.display = 'none';
+    return;
+  }
+  $('cal-accuracy').style.display = 'flex';
+  const last10 = state.cal.slice(0, 10);
+  const avgErr = last10.reduce((a, c) => a + c.error, 0) / last10.length;
+  const spotOn = state.cal.filter(c => c.error < 0.5).length;
+  const spotOnRate = Math.round(spotOn / state.cal.length * 100);
+  $('cal-acc-avg').textContent = avgErr.toFixed(1) + '%';
+  $('cal-acc-count').textContent = state.cal.length;
+  $('cal-acc-best').textContent = spotOnRate + '%';
+}
+
+function renderRead() {
+  // existing calculator render, plus refresh cal accuracy when tab opens
+  const distFeet = Math.round(readState.paces * readState.paceFeet);
+  $('pace-num').textContent = readState.paces;
+  $('pace-sub').textContent = '≈ ' + distFeet + ' ft';
+  const inches = computeBreak();
+  $('result-inches').textContent = inches;
+  const sideWord = readState.side === 'right' ? 'right' : 'left';
+  const intentLine = readState.intent === 'make'
+    ? 'Aim ' + inches + ' inches ' + sideWord + ' of the cup. Hit it to finish ~12″ past.'
+    : 'Aim ' + inches + ' inches ' + sideWord + ' of the cup. Die-it-in pace — falls in or stops close.';
+  $('result-aim').textContent = intentLine;
+  renderCalAccuracy();
+}
 
 loadAll();
 </script>
