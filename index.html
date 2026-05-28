@@ -87,6 +87,7 @@
   .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; max-width: 260px; aspect-ratio: 1; margin: 0 auto; position: relative; }
   .target-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.2; color: var(--ink-2); border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); cursor: pointer; padding: 4px; text-align: center; min-height: 0; }
   .target-cell.selected { background: var(--amber); color: white; border-color: var(--amber); }
+  .target-cell.center { cursor: default; background: var(--surface-2); border-style: dashed; border-color: var(--border); color: var(--ink-3); }
   .target-cell-axis { font-size: 10px; opacity: 0.85; }
   .target-pin { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-bottom: 3px; box-shadow: 0 0 0 2px var(--surface); }
   .target-cell.selected .target-pin { background: white; box-shadow: 0 0 0 2px var(--amber); }
@@ -218,7 +219,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.5</div>
+    <div class="brand-tag" id="brand-tag">v1.6</div>
   </div>
 
   <div class="tabs">
@@ -279,7 +280,7 @@
               <button class="target-cell" data-d="long" data-l="center"><span class="target-cell-axis">long</span></button>
               <button class="target-cell" data-d="long" data-l="right"><span class="target-cell-axis">long</span><span class="target-cell-axis">right</span></button>
               <button class="target-cell" data-d="center" data-l="left"><span class="target-cell-axis">left</span></button>
-              <button class="target-cell center" data-d="center" data-l="center"><div class="target-pin"></div><span class="target-cell-axis">on line</span></button>
+              <div class="target-cell center"><div class="target-pin"></div><span class="target-cell-axis" style="opacity: 0.6;">hole</span></div>
               <button class="target-cell" data-d="center" data-l="right"><span class="target-cell-axis">right</span></button>
               <button class="target-cell" data-d="short" data-l="left"><span class="target-cell-axis">short</span><span class="target-cell-axis">left</span></button>
               <button class="target-cell" data-d="short" data-l="center"><span class="target-cell-axis">short</span></button>
@@ -558,7 +559,7 @@ function loadAll() {
   state.zero = loadFromStorage(STORAGE_KEYS.zero, null);
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
   if (!Array.isArray(state.cal)) state.cal = [];
-  $('brand-tag').textContent = 'v1.5 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.6 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -608,7 +609,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.5 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.6 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -638,12 +639,11 @@ $('missed-btn').addEventListener('click', () => {
   $('miss-detail').style.display = 'block';
 });
 
-document.querySelectorAll('.target-cell').forEach(b => {
+document.querySelectorAll('.target-cell:not(.center)').forEach(b => {
   b.addEventListener('click', () => {
     if (!state.pendingMiss || !state.activeRound) return;
     const distAxis = b.dataset.d;
     const lineAxis = b.dataset.l;
-    if (distAxis === 'center' && lineAxis === 'center') return;
     state.activeRound.putts[state.activeRound.currentHole].push({
       dist: state.selectedDist, made: false,
       missDist: distAxis, missLine: lineAxis,
@@ -1101,7 +1101,6 @@ $('cal-enable').addEventListener('click', async () => {
 
 $('cal-capture').addEventListener('click', () => {
   const actual = calState.currentSlope;
-  const actualRounded = Math.round(actual); // nearest whole percent, to compare to the 1-4 guess scale
   const guess = calState.guess;
   const error = Math.abs(actual - guess);
   stopLevel();
@@ -1145,6 +1144,11 @@ $('cal-capture').addEventListener('click', () => {
     again.addEventListener('click', resetCal);
     resultEl.after(again);
   }
+
+  // Scroll the verdict into view — it's the answer, don't make the user hunt for it.
+  setTimeout(() => {
+    resultEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 100);
 });
 
 function resetCal() {
@@ -1253,13 +1257,21 @@ $('zero-capture').addEventListener('click', () => {
   saveZero();
   stopZeroListener();
   const offsetSlope = zeroState.rawSlope.toFixed(2);
+  // Show brief "captured" confirmation in the flow, then auto-collapse.
+  // The persistent green banner above the trainer is the real confirmation.
   $('zero-done').style.display = 'block';
-  $('zero-done').innerHTML = '✓ <strong>Zeroed.</strong> Captured ' + offsetSlope + '% as your phone\'s baseline bump. Every slope reading now subtracts this. <a href="#" id="zero-close-link" style="color: inherit; text-decoration: underline;">Close</a>';
-  $('zero-close-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    $('zero-flow').style.display = 'none';
-  });
+  $('zero-done').innerHTML = '✓ <strong>Zeroed.</strong> Captured ' + offsetSlope + '% as your phone\'s baseline bump.';
+  // Hide the action buttons since they're no longer relevant
+  const actionRow = document.querySelector('#zero-flow .zero-action-row');
+  if (actionRow) actionRow.style.display = 'none';
   renderZeroBanner();
+  // Auto-dismiss after 1.8s so the user has time to read it
+  setTimeout(() => {
+    $('zero-flow').style.display = 'none';
+    // Reset the flow state so it's clean next time
+    $('zero-done').style.display = 'none';
+    if (actionRow) actionRow.style.display = 'flex';
+  }, 1800);
 });
 
 function renderRead() {
