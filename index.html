@@ -174,6 +174,24 @@
   .cal-acc-lbl { font-size: 10px; color: var(--ink-2); margin-top: 2px; }
   .cal-again { width: 100%; padding: 11px; font-size: 13px; font-weight: 500; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); margin-top: 12px; }
   .cal-unsupported { padding: 12px; background: var(--red-bg); color: var(--red-ink); border-radius: var(--radius-md); font-size: 12px; line-height: 1.5; }
+  .zero-banner { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 8px 12px; border-radius: var(--radius-md); margin-bottom: 14px; font-size: 12px; }
+  .zero-banner.uncal { background: var(--red-bg); color: var(--red-ink); }
+  .zero-banner.cal { background: var(--green-bg); color: var(--green-ink); }
+  .zero-banner-text { flex: 1; line-height: 1.4; }
+  .zero-banner-text strong { font-weight: 600; }
+  .zero-banner-btn { padding: 7px 11px; font-size: 11px; font-weight: 500; border: 0.5px solid currentColor; background: transparent; border-radius: var(--radius-sm); cursor: pointer; color: inherit; white-space: nowrap; }
+  .zero-flow { padding: 16px; background: var(--surface-2); border-radius: var(--radius-md); }
+  .zero-step-num { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 50%; background: var(--amber); color: white; font-size: 12px; font-weight: 500; margin-right: 8px; }
+  .zero-step { display: flex; align-items: flex-start; gap: 4px; margin-bottom: 12px; font-size: 13px; line-height: 1.5; color: var(--ink); }
+  .zero-step-text { flex: 1; padding-top: 1px; }
+  .zero-readout { text-align: center; padding: 14px; background: var(--surface); border-radius: var(--radius-md); margin: 12px 0; }
+  .zero-readout-raw { font-family: var(--font-serif); font-size: 26px; font-weight: 500; color: var(--ink); }
+  .zero-readout-label { font-size: 10px; color: var(--ink-2); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+  .zero-action-row { display: flex; gap: 6px; margin-top: 8px; }
+  .zero-action-row button { flex: 1; padding: 11px; font-size: 13px; font-weight: 500; border-radius: var(--radius-md); cursor: pointer; }
+  .zero-action-primary { background: var(--amber); color: white; border: 0.5px solid var(--amber); }
+  .zero-action-cancel { background: var(--surface); color: var(--ink); border: 0.5px solid var(--border); }
+  .zero-done { padding: 14px; background: var(--green-bg); color: var(--green-ink); border-radius: var(--radius-md); font-size: 13px; line-height: 1.5; margin-top: 8px; }
   .read-intent-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
   .read-intent-btn { padding: 13px 8px; font-size: 13px; border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-md); cursor: pointer; color: var(--ink); text-align: center; line-height: 1.3; }
   .read-intent-btn.selected { background: var(--amber); color: white; border-color: var(--amber); }
@@ -200,7 +218,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.4</div>
+    <div class="brand-tag" id="brand-tag">v1.5</div>
   </div>
 
   <div class="tabs">
@@ -377,7 +395,32 @@
           <div class="card-sub">guess first, then check · teach the eye</div>
         </div>
       </div>
+      <div id="zero-banner" class="zero-banner uncal">
+        <div class="zero-banner-text"><strong>Not zeroed.</strong> Your phone's camera bump tilts ~1°+ — that's 2%+ of fake slope baked into every reading. Calibrate once on a flat surface.</div>
+        <button class="zero-banner-btn" id="zero-banner-btn">Calibrate</button>
+      </div>
+
       <div class="cal-intro">Read the slope with your eye. Lock in your guess. <em>Then</em> lay the phone flat on the green along the fall line and reveal the truth. Over time your guesses close in on the level — and you won't need the phone on the course.</div>
+
+      <div id="zero-flow" style="display: none;">
+        <div class="zero-flow">
+          <div class="zero-step"><div class="zero-step-num">1</div><div class="zero-step-text">Find a surface you know is dead flat — a kitchen counter, glass table, granite/quartz countertop. Avoid tablecloths, wood that may warp, anything spongy.</div></div>
+          <div class="zero-step"><div class="zero-step-num">2</div><div class="zero-step-text">Lay your phone face-up on the surface, with case on (or off — match how you'll use it on the green).</div></div>
+          <div class="zero-step"><div class="zero-step-num">3</div><div class="zero-step-text">Wait for the reading to settle, then tap <strong>Capture zero</strong>. Whatever it shows now becomes "flat" — every future reading subtracts this offset.</div></div>
+
+          <div class="zero-readout">
+            <div class="zero-readout-raw"><span id="zero-raw">—</span>%</div>
+            <div class="zero-readout-label">raw tilt right now</div>
+          </div>
+
+          <div class="zero-action-row">
+            <button class="zero-action-cancel" id="zero-cancel">Cancel</button>
+            <button class="zero-action-primary" id="zero-capture">Capture zero</button>
+          </div>
+
+          <div id="zero-done" class="zero-done" style="display: none;"></div>
+        </div>
+      </div>
 
       <div id="cal-stage-guess">
         <div class="read-step-label" style="margin-bottom: 8px;">your read</div>
@@ -481,13 +524,14 @@
 </div>
 
 <script>
-const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', drills: 'putttrap_drills', cal: 'putttrap_cal' };
+const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', drills: 'putttrap_drills', cal: 'putttrap_cal', zero: 'putttrap_zero' };
 
 const state = {
   activeRound: null,
   rounds: [],
   drills: { gate: [], ladder: [], clock: [] },
   cal: [],
+  zero: null,  // { beta, gamma, capturedAt } — phone tilt offset on a known-flat surface
   selectedDist: null,
   pendingMiss: false
 };
@@ -511,9 +555,10 @@ function loadAll() {
   state.rounds = loadFromStorage(STORAGE_KEYS.rounds, []);
   state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
   state.cal = loadFromStorage(STORAGE_KEYS.cal, []);
+  state.zero = loadFromStorage(STORAGE_KEYS.zero, null);
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
   if (!Array.isArray(state.cal)) state.cal = [];
-  $('brand-tag').textContent = 'v1.4 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.5 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -522,6 +567,7 @@ function saveActive() { state.activeRound ? saveToStorage(STORAGE_KEYS.active, s
 function saveRounds() { saveToStorage(STORAGE_KEYS.rounds, state.rounds); }
 function saveDrills() { saveToStorage(STORAGE_KEYS.drills, state.drills); }
 function saveCal() { saveToStorage(STORAGE_KEYS.cal, state.cal); }
+function saveZero() { state.zero ? saveToStorage(STORAGE_KEYS.zero, state.zero) : localStorage.removeItem(STORAGE_KEYS.zero); }
 
 function switchTab(tab) {
   document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
@@ -562,7 +608,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.4 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.5 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -881,7 +927,7 @@ function renderDrillLast() {
 }
 
 $('export-btn').addEventListener('click', () => {
-  const data = { exportedAt: new Date().toISOString(), version: 2, rounds: state.rounds, drills: state.drills, cal: state.cal, activeRound: state.activeRound };
+  const data = { exportedAt: new Date().toISOString(), version: 3, rounds: state.rounds, drills: state.drills, cal: state.cal, zero: state.zero, activeRound: state.activeRound };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -906,6 +952,7 @@ $('import-btn').addEventListener('click', () => {
         if (data.rounds) { state.rounds = data.rounds; saveRounds(); }
         if (data.drills) { state.drills = data.drills; saveDrills(); }
         if (data.cal) { state.cal = data.cal; saveCal(); }
+        if (data.zero !== undefined) { state.zero = data.zero; saveZero(); }
         if (data.activeRound) { state.activeRound = data.activeRound; saveActive(); }
         loadAll();
         alert('Imported successfully.');
@@ -923,6 +970,7 @@ $('reset-btn').addEventListener('click', () => {
   state.rounds = [];
   state.drills = { gate: [], ladder: [], clock: [] };
   state.cal = [];
+  state.zero = null;
   loadAll();
 });
 
@@ -968,12 +1016,22 @@ document.querySelectorAll('.read-side-btn').forEach(b => {
 // ---- Slope trainer (guess -> level -> log the gap) ----
 const calState = { guess: null, listening: false, currentSlope: 0, handler: null };
 
+function correctedTilt(beta, gamma) {
+  // Subtract the zero-offset captured on a known-flat surface.
+  // This cancels the camera-bump bias on the phone's resting tilt.
+  const bOff = state.zero ? (state.zero.beta || 0) : 0;
+  const gOff = state.zero ? (state.zero.gamma || 0) : 0;
+  return {
+    beta: (beta || 0) - bOff,
+    gamma: (gamma || 0) - gOff
+  };
+}
+
 function tiltToSlopePct(beta, gamma) {
   // beta = front/back tilt, gamma = left/right tilt, both in degrees.
   // Combined tilt from horizontal: the magnitude of the gradient.
   const b = (beta || 0) * Math.PI / 180;
   const g = (gamma || 0) * Math.PI / 180;
-  // tan of combined tilt angle = sqrt(tan^2(beta) + tan^2(gamma))
   const tanCombined = Math.sqrt(Math.tan(b) * Math.tan(b) + Math.tan(g) * Math.tan(g));
   return tanCombined * 100; // slope percent
 }
@@ -990,14 +1048,14 @@ document.querySelectorAll('.cal-guess-btn').forEach(b => {
 function startLevel() {
   const onOrient = (e) => {
     if (e.beta === null && e.gamma === null) return;
-    const slope = tiltToSlopePct(e.beta, e.gamma);
+    const c = correctedTilt(e.beta, e.gamma);
+    const slope = tiltToSlopePct(c.beta, c.gamma);
     calState.currentSlope = slope;
     $('cal-reading').textContent = slope.toFixed(1);
-    // Move bubble: map gamma/beta to offset within the 120px circle (clamped)
-    const maxDeg = 6; // full deflection at ~6 degrees
-    const gx = Math.max(-1, Math.min(1, (e.gamma || 0) / maxDeg));
-    const gy = Math.max(-1, Math.min(1, (e.beta || 0) / maxDeg));
-    const r = 44; // px radius of travel
+    const maxDeg = 6;
+    const gx = Math.max(-1, Math.min(1, c.gamma / maxDeg));
+    const gy = Math.max(-1, Math.min(1, c.beta / maxDeg));
+    const r = 44;
     const bubble = $('cal-bubble');
     if (bubble) bubble.style.transform = 'translate(calc(-50% + ' + (gx * r) + 'px), calc(-50% + ' + (gy * r) + 'px))';
   };
@@ -1014,28 +1072,27 @@ function stopLevel() {
   calState.listening = false;
 }
 
-$('cal-enable').addEventListener('click', async () => {
-  if (calState.guess === null) return;
-  if (!('DeviceOrientationEvent' in window)) {
-    $('cal-stage-guess').style.display = 'none';
-    $('cal-unsupported').style.display = 'block';
-    return;
-  }
-  // iOS 13+ requires explicit permission, triggered by this tap.
+async function ensureMotionPermission() {
+  if (!('DeviceOrientationEvent' in window)) return { ok: false, reason: 'unsupported' };
   if (typeof DeviceOrientationEvent.requestPermission === 'function') {
     try {
       const perm = await DeviceOrientationEvent.requestPermission();
-      if (perm !== 'granted') {
-        $('cal-stage-guess').style.display = 'none';
-        $('cal-unsupported').style.display = 'block';
-        $('cal-unsupported').textContent = 'Permission denied. Enable Motion & Orientation Access in Safari settings, or tap to try again.';
-        return;
-      }
+      if (perm !== 'granted') return { ok: false, reason: 'denied' };
     } catch (err) {
-      $('cal-stage-guess').style.display = 'none';
-      $('cal-unsupported').style.display = 'block';
-      return;
+      return { ok: false, reason: 'error' };
     }
+  }
+  return { ok: true };
+}
+
+$('cal-enable').addEventListener('click', async () => {
+  if (calState.guess === null) return;
+  const perm = await ensureMotionPermission();
+  if (!perm.ok) {
+    $('cal-stage-guess').style.display = 'none';
+    $('cal-unsupported').style.display = 'block';
+    if (perm.reason === 'denied') $('cal-unsupported').textContent = 'Permission denied. Enable Motion & Orientation Access in Safari settings, or tap to try again.';
+    return;
   }
   $('cal-stage-guess').style.display = 'none';
   $('cal-stage-level').style.display = 'block';
@@ -1118,8 +1175,94 @@ function renderCalAccuracy() {
   $('cal-acc-best').textContent = spotOnRate + '%';
 }
 
+// ---- Zero calibration (phone-bump correction) ----
+const zeroState = { listening: false, handler: null, rawBeta: 0, rawGamma: 0, rawSlope: 0 };
+
+function renderZeroBanner() {
+  const banner = $('zero-banner');
+  if (!banner) return;
+  banner.style.display = 'flex';
+  if (state.zero) {
+    const ageDays = Math.floor((Date.now() - new Date(state.zero.capturedAt).getTime()) / 86400000);
+    const ageLabel = ageDays === 0 ? 'today' : ageDays === 1 ? '1 day ago' : ageDays + ' days ago';
+    const offsetSlope = tiltToSlopePct(state.zero.beta, state.zero.gamma).toFixed(1);
+    banner.className = 'zero-banner cal';
+    banner.innerHTML =
+      '<div class="zero-banner-text">✓ <strong>Zeroed ' + ageLabel + '.</strong> Subtracting ' + offsetSlope + '% bump from every reading.</div>' +
+      '<button class="zero-banner-btn" id="zero-banner-btn">Redo</button>';
+  } else {
+    banner.className = 'zero-banner uncal';
+    banner.innerHTML =
+      '<div class="zero-banner-text"><strong>Not zeroed.</strong> Your phone\'s camera bump tilts ~1°+ — that\'s 2%+ of fake slope baked into every reading. Calibrate once on a flat surface.</div>' +
+      '<button class="zero-banner-btn" id="zero-banner-btn">Calibrate</button>';
+  }
+  $('zero-banner-btn').addEventListener('click', startZeroFlow);
+}
+
+async function startZeroFlow() {
+  const perm = await ensureMotionPermission();
+  if (!perm.ok) {
+    alert(perm.reason === 'denied'
+      ? 'Motion permission was denied. Enable Motion & Orientation Access in Safari settings, then try again.'
+      : 'Motion sensors aren\'t available here. This needs Safari on iPhone over HTTPS.');
+    return;
+  }
+  $('zero-flow').style.display = 'block';
+  $('zero-done').style.display = 'none';
+  $('zero-flow').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  startZeroListener();
+}
+
+function startZeroListener() {
+  const onOrient = (e) => {
+    if (e.beta === null && e.gamma === null) return;
+    zeroState.rawBeta = e.beta || 0;
+    zeroState.rawGamma = e.gamma || 0;
+    // For the raw display, show the slope without applying the existing zero —
+    // because the user is trying to capture a NEW zero.
+    const b = zeroState.rawBeta * Math.PI / 180;
+    const g = zeroState.rawGamma * Math.PI / 180;
+    zeroState.rawSlope = Math.sqrt(Math.tan(b)*Math.tan(b) + Math.tan(g)*Math.tan(g)) * 100;
+    const raw = $('zero-raw');
+    if (raw) raw.textContent = zeroState.rawSlope.toFixed(2);
+  };
+  zeroState.handler = onOrient;
+  window.addEventListener('deviceorientation', onOrient, true);
+  zeroState.listening = true;
+}
+
+function stopZeroListener() {
+  if (zeroState.handler) {
+    window.removeEventListener('deviceorientation', zeroState.handler, true);
+    zeroState.handler = null;
+  }
+  zeroState.listening = false;
+}
+
+$('zero-cancel').addEventListener('click', () => {
+  stopZeroListener();
+  $('zero-flow').style.display = 'none';
+});
+
+$('zero-capture').addEventListener('click', () => {
+  state.zero = {
+    beta: zeroState.rawBeta,
+    gamma: zeroState.rawGamma,
+    capturedAt: new Date().toISOString()
+  };
+  saveZero();
+  stopZeroListener();
+  const offsetSlope = zeroState.rawSlope.toFixed(2);
+  $('zero-done').style.display = 'block';
+  $('zero-done').innerHTML = '✓ <strong>Zeroed.</strong> Captured ' + offsetSlope + '% as your phone\'s baseline bump. Every slope reading now subtracts this. <a href="#" id="zero-close-link" style="color: inherit; text-decoration: underline;">Close</a>';
+  $('zero-close-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    $('zero-flow').style.display = 'none';
+  });
+  renderZeroBanner();
+});
+
 function renderRead() {
-  // existing calculator render, plus refresh cal accuracy when tab opens
   const distFeet = Math.round(readState.paces * readState.paceFeet);
   $('pace-num').textContent = readState.paces;
   $('pace-sub').textContent = '≈ ' + distFeet + ' ft';
@@ -1131,6 +1274,7 @@ function renderRead() {
     : 'Aim ' + inches + ' inches ' + sideWord + ' of the cup. Die-it-in pace — falls in or stops close.';
   $('result-aim').textContent = intentLine;
   renderCalAccuracy();
+  renderZeroBanner();
 }
 
 loadAll();
