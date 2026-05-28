@@ -170,7 +170,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.2</div>
+    <div class="brand-tag" id="brand-tag">v1.3</div>
   </div>
 
   <div class="tabs">
@@ -435,7 +435,7 @@ function loadAll() {
   state.rounds = loadFromStorage(STORAGE_KEYS.rounds, []);
   state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
-  $('brand-tag').textContent = 'v1.2 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.3 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -483,7 +483,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.2 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.3 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -661,7 +661,6 @@ function renderStats() {
     return;
   }
   const latest = rounds[0];
-  const s = computeRoundStats(latest);
   const isActive = state.activeRound && rounds[0] === state.activeRound;
 
   let trendHtml = '';
@@ -678,6 +677,12 @@ function renderStats() {
     trendHtml = '<div class="card"><div class="card-header"><div class="card-title">Putt trend</div><div class="card-sub">last ' + recent.length + ' rounds</div></div><div class="trend">' + bars + '</div><div class="trend-labels">' + labels + '</div></div>';
   }
 
+  container.innerHTML = trendHtml + buildRoundDetailHtml(latest, isActive ? 'Round in progress' : 'Latest round', 'stats');
+  wireCoachBtn('stats');
+}
+
+function buildRoundDetailHtml(round, label, idSuffix) {
+  const s = computeRoundStats(round);
   const shortPct = s.shortAttempts > 0 ? Math.round(s.shortMakes / s.shortAttempts * 100) : null;
   const lagPct = s.lagSuccess.attempts > 0 ? Math.round(s.lagSuccess.inside3 / s.lagSuccess.attempts * 100) : null;
   const avg = s.holesPlayed > 0 ? (s.total / s.holesPlayed) : null;
@@ -707,9 +712,9 @@ function renderStats() {
     }
   }
 
-  const promptText = 'Analyze my latest PuttTrap round: ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts. Speed misses: short=' + s.speed.short + ' long=' + s.speed.long + '. Direction misses: left=' + s.line.left + ' right=' + s.line.right + '.' + (lagPct !== null ? ' Lag success ' + lagPct + '%.' : '') + (shortPct !== null ? ' Short-putt make rate ' + shortPct + '%.' : '') + ' What should I work on?';
+  const promptText = 'Analyze my PuttTrap round from ' + fmtDate(round.startedAt) + ': ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts. Speed misses: short=' + s.speed.short + ' long=' + s.speed.long + '. Direction misses: left=' + s.line.left + ' right=' + s.line.right + '.' + (lagPct !== null ? ' Lag success ' + lagPct + '% (' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts + ').' : '') + (shortPct !== null ? ' Short-putt make rate ' + shortPct + '%.' : '') + ' What should I work on?';
 
-  container.innerHTML = trendHtml + '<div class="card"><div class="card-header"><div><div class="card-title">' + (isActive ? 'Round in progress' : 'Latest round') + '</div><div class="card-sub">' + fmtDate(latest.startedAt) + ' · ' + s.holesPlayed + ' holes</div></div></div>' +
+  return '<div class="card"><div class="card-header"><div><div class="card-title">' + label + '</div><div class="card-sub">' + fmtDate(round.startedAt) + ' · ' + s.holesPlayed + ' holes</div></div></div>' +
     '<div class="stats-grid">' +
     '<div class="stat"><div class="stat-label">total putts</div><div class="stat-value">' + s.total + '</div><div class="stat-sub">target: under 38</div></div>' +
     '<div class="stat"><div class="stat-label">three-putts</div><div class="stat-value">' + s.three + '</div><div class="stat-sub">target: under 4</div></div>' +
@@ -723,15 +728,18 @@ function renderStats() {
     (diagnosis ? '<div class="lag-line" style="margin-top: 12px; padding: 10px 12px; background: var(--amber-bg); color: var(--amber-ink); border-radius: var(--radius-md); font-size: 12px;">' + diagnosis + '</div>' : '') +
     '<div class="section-label" style="margin-top: 16px;">lag putt control</div>' +
     '<div class="lag-line">' + (lagPct !== null ? lagPct + '% of long first putts (20 ft+) finished inside 3 ft &nbsp;·&nbsp; ' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts : 'No long first putts logged yet') + '</div>' +
-    '<button class="followup" data-prompt="' + encodeURIComponent(promptText) + '" id="coach-btn">Get a coaching read on this round ↗</button>' +
+    '<button class="followup" data-prompt="' + encodeURIComponent(promptText) + '" id="coach-btn-' + idSuffix + '">Copy coaching summary ↗</button>' +
     '</div>';
+}
 
-  const coachBtn = $('coach-btn');
+function wireCoachBtn(idSuffix) {
+  const coachBtn = $('coach-btn-' + idSuffix);
   if (coachBtn) coachBtn.addEventListener('click', () => {
     const text = decodeURIComponent(coachBtn.dataset.prompt);
+    const original = coachBtn.textContent;
     navigator.clipboard.writeText(text).then(() => {
       coachBtn.textContent = 'Copied — paste into Claude ✓';
-      setTimeout(() => { coachBtn.textContent = 'Get a coaching read on this round ↗'; }, 2400);
+      setTimeout(() => { coachBtn.textContent = original; }, 2400);
     }).catch(() => {
       alert(text);
     });
@@ -744,12 +752,26 @@ function renderHistory() {
     container.innerHTML = '<div class="card"><div class="empty">No completed rounds yet.</div></div>';
     return;
   }
-  container.innerHTML = '<div class="card"><div class="card-header"><div class="card-title">Completed rounds</div><div class="card-sub">' + state.rounds.length + ' total</div></div><div class="rounds-list">' +
-    state.rounds.map(r => {
+  container.innerHTML = '<div class="card"><div class="card-header"><div class="card-title">Completed rounds</div><div class="card-sub">' + state.rounds.length + ' total · tap for detail</div></div><div class="rounds-list">' +
+    state.rounds.map((r, idx) => {
       const s = computeRoundStats(r);
-      return '<div class="round-row"><div><div class="round-date">' + fmtDate(r.startedAt) + '</div><div class="round-sub">' + s.holesPlayed + ' holes · avg ' + (s.holesPlayed > 0 ? (s.total/s.holesPlayed).toFixed(2) : '—') + '</div></div><div class="round-stats"><div class="round-stat"><div class="round-stat-val">' + s.total + '</div><div class="round-stat-lbl">putts</div></div><div class="round-stat"><div class="round-stat-val">' + s.three + '</div><div class="round-stat-lbl">3-putts</div></div></div></div>';
+      return '<div class="round-row" data-round-idx="' + idx + '"><div><div class="round-date">' + fmtDate(r.startedAt) + '</div><div class="round-sub">' + s.holesPlayed + ' holes · avg ' + (s.holesPlayed > 0 ? (s.total/s.holesPlayed).toFixed(2) : '—') + '</div></div><div class="round-stats"><div class="round-stat"><div class="round-stat-val">' + s.total + '</div><div class="round-stat-lbl">putts</div></div><div class="round-stat"><div class="round-stat-val">' + s.three + '</div><div class="round-stat-lbl">3-putts</div></div><div style="color: var(--ink-3); font-size: 18px; margin-left: 4px;">›</div></div></div>';
     }).join('') +
     '</div></div>';
+
+  container.querySelectorAll('.round-row').forEach(row => {
+    row.addEventListener('click', () => showRoundDetail(parseInt(row.dataset.roundIdx)));
+  });
+}
+
+function showRoundDetail(idx) {
+  const round = state.rounds[idx];
+  if (!round) return;
+  const container = $('history-content');
+  container.innerHTML = '<button class="action-btn" id="history-back" style="margin-bottom: 12px; max-width: 140px;">‹ All rounds</button>' +
+    buildRoundDetailHtml(round, 'Round detail', 'history');
+  $('history-back').addEventListener('click', renderHistory);
+  wireCoachBtn('history');
 }
 
 ['gate', 'ladder', 'clock'].forEach(drill => {
