@@ -82,16 +82,21 @@
   .result-btn.made { background: var(--green-bg); border-color: var(--green-border); color: var(--green-ink); }
   .result-btn.missed { background: var(--red-bg); border-color: var(--red-border); color: var(--red-ink); }
   .result-btn:disabled { opacity: 0.4; }
-  .target-wrap { margin-top: 8px; padding: 12px; background: var(--surface-2); border-radius: var(--radius-md); }
-  .target-help { font-size: 11px; color: var(--ink-2); text-align: center; margin-bottom: 10px; }
-  .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; max-width: 260px; aspect-ratio: 1; margin: 0 auto; position: relative; }
-  .target-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.2; color: var(--ink-2); border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); cursor: pointer; padding: 4px; text-align: center; min-height: 0; }
+  .target-wrap { margin-top: 8px; padding: 8px; background: var(--surface-2); border-radius: var(--radius-md); }
+  .target-help { font-size: 11px; color: var(--ink-2); text-align: center; margin-bottom: 8px; }
+  .target-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; width: 100%; max-width: 240px; aspect-ratio: 1; margin: 0 auto; position: relative; }
+  .target-cell { display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 10px; line-height: 1.15; color: var(--ink-2); border: 0.5px solid var(--border); background: var(--surface); border-radius: var(--radius-sm); cursor: pointer; padding: 2px; text-align: center; min-height: 0; }
   .target-cell.selected { background: var(--amber); color: white; border-color: var(--amber); }
   .target-cell.center { cursor: default; background: var(--surface-2); border-style: dashed; border-color: var(--border); color: var(--ink-3); }
   .target-cell-axis { font-size: 10px; opacity: 0.85; }
-  .target-pin { width: 10px; height: 10px; border-radius: 50%; background: var(--amber); margin-bottom: 3px; box-shadow: 0 0 0 2px var(--surface); }
+  .target-pin { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); margin-bottom: 2px; box-shadow: 0 0 0 2px var(--surface); }
   .target-cell.selected .target-pin { background: white; box-shadow: 0 0 0 2px var(--amber); }
   .target-axis-label { font-size: 9px; color: var(--ink-3); text-align: center; }
+  .close-miss-toggle { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 10px; padding: 9px 12px; background: var(--surface); border: 0.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; font-size: 12px; color: var(--ink); }
+  .close-miss-toggle.active { background: var(--amber-bg); border-color: var(--amber); color: var(--amber-ink); }
+  .close-miss-toggle-label { flex: 1; line-height: 1.3; }
+  .close-miss-toggle-check { width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border-strong); background: var(--surface); flex-shrink: 0; display: flex; align-items: center; justify-content: center; font-size: 12px; color: var(--amber); }
+  .close-miss-toggle.active .close-miss-toggle-check { background: var(--amber); border-color: var(--amber); color: white; }
   .putts-list { margin-top: 12px; padding-top: 12px; border-top: 0.5px solid var(--border); }
   .putt-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; font-size: 13px; }
   .made-tag { color: var(--green-ink); font-weight: 500; }
@@ -219,7 +224,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.6</div>
+    <div class="brand-tag" id="brand-tag">v1.7</div>
   </div>
 
   <div class="tabs">
@@ -272,9 +277,8 @@
         </div>
 
         <div id="miss-detail" style="display: none;">
-          <div class="section-label" style="margin-top: 10px;">where did it end up?</div>
+          <div class="section-label" style="margin-top: 10px;">where it ended up</div>
           <div class="target-wrap">
-            <div class="target-help">Tap the cell matching where the ball stopped relative to the hole. The pin is the hole.</div>
             <div class="target-grid" id="target-grid">
               <button class="target-cell" data-d="long" data-l="left"><span class="target-cell-axis">long</span><span class="target-cell-axis">left</span></button>
               <button class="target-cell" data-d="long" data-l="center"><span class="target-cell-axis">long</span></button>
@@ -286,7 +290,10 @@
               <button class="target-cell" data-d="short" data-l="center"><span class="target-cell-axis">short</span></button>
               <button class="target-cell" data-d="short" data-l="right"><span class="target-cell-axis">short</span><span class="target-cell-axis">right</span></button>
             </div>
-            <div class="target-axis-label" style="margin-top: 8px;">you · putting from below</div>
+            <div class="close-miss-toggle" id="close-miss-toggle">
+              <span class="close-miss-toggle-label">Lip-out or burned the edge</span>
+              <span class="close-miss-toggle-check" id="close-miss-check"></span>
+            </div>
           </div>
         </div>
 
@@ -534,7 +541,8 @@ const state = {
   cal: [],
   zero: null,  // { beta, gamma, capturedAt } — phone tilt offset on a known-flat surface
   selectedDist: null,
-  pendingMiss: false
+  pendingMiss: false,
+  pendingCloseMiss: false
 };
 
 const $ = (id) => document.getElementById(id);
@@ -559,7 +567,7 @@ function loadAll() {
   state.zero = loadFromStorage(STORAGE_KEYS.zero, null);
   ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
   if (!Array.isArray(state.cal)) state.cal = [];
-  $('brand-tag').textContent = 'v1.6 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.7 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -609,7 +617,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.6 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.7 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -636,7 +644,20 @@ $('made-btn').addEventListener('click', () => {
 $('missed-btn').addEventListener('click', () => {
   if (state.selectedDist === null) return;
   state.pendingMiss = true;
+  state.pendingCloseMiss = false;
+  $('close-miss-toggle').classList.remove('active');
+  $('close-miss-check').textContent = '';
   $('miss-detail').style.display = 'block';
+  // Scroll the 3x3 into view — it's often below the fold on small screens.
+  setTimeout(() => {
+    $('miss-detail').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, 80);
+});
+
+$('close-miss-toggle').addEventListener('click', () => {
+  state.pendingCloseMiss = !state.pendingCloseMiss;
+  $('close-miss-toggle').classList.toggle('active', state.pendingCloseMiss);
+  $('close-miss-check').textContent = state.pendingCloseMiss ? '✓' : '';
 });
 
 document.querySelectorAll('.target-cell:not(.center)').forEach(b => {
@@ -644,12 +665,14 @@ document.querySelectorAll('.target-cell:not(.center)').forEach(b => {
     if (!state.pendingMiss || !state.activeRound) return;
     const distAxis = b.dataset.d;
     const lineAxis = b.dataset.l;
-    state.activeRound.putts[state.activeRound.currentHole].push({
+    const putt = {
       dist: state.selectedDist, made: false,
       missDist: distAxis, missLine: lineAxis,
       missDir: distAxis !== 'center' ? distAxis : lineAxis,
       t: Date.now()
-    });
+    };
+    if (state.pendingCloseMiss) putt.closeMiss = true;
+    state.activeRound.putts[state.activeRound.currentHole].push(putt);
     saveActive();
     resetSelection();
     renderHole();
@@ -660,8 +683,11 @@ document.querySelectorAll('.target-cell:not(.center)').forEach(b => {
 function resetSelection() {
   state.selectedDist = null;
   state.pendingMiss = false;
+  state.pendingCloseMiss = false;
   document.querySelectorAll('.dist-btn').forEach(x => x.classList.remove('selected'));
   document.querySelectorAll('.target-cell').forEach(x => x.classList.remove('selected'));
+  $('close-miss-toggle').classList.remove('active');
+  $('close-miss-check').textContent = '';
   $('miss-detail').style.display = 'none';
   $('made-btn').disabled = true;
   $('missed-btn').disabled = true;
@@ -725,7 +751,8 @@ function renderHole() {
       const parts = [];
       if (p.missDist && p.missDist !== 'center') parts.push(p.missDist);
       if (p.missLine && p.missLine !== 'center') parts.push(p.missLine);
-      result = '<span class="miss-tag">missed ' + (parts.join(' + ') || p.missDir || '') + '</span>';
+      const closeTag = p.closeMiss ? ' <span style="color: var(--amber-ink); font-weight: 500;">(lip)</span>' : '';
+      result = '<span class="miss-tag">missed ' + (parts.join(' + ') || p.missDir || '') + closeTag + '</span>';
     } else {
       result = '<span class="miss-tag">missed ' + (p.missDir || '') + '</span>';
     }
@@ -734,7 +761,7 @@ function renderHole() {
 }
 
 function computeRoundStats(round) {
-  let total = 0, three = 0, shortMakes = 0, shortAttempts = 0, holesPlayed = 0;
+  let total = 0, three = 0, shortMakes = 0, shortAttempts = 0, holesPlayed = 0, closeMisses = 0;
   const speed = { short: 0, long: 0, center: 0 };
   const line = { left: 0, right: 0, center: 0 };
   const misses = { short: 0, long: 0, left: 0, right: 0 };
@@ -755,6 +782,7 @@ function computeRoundStats(round) {
         if (p.made || (next && next.dist <= 3)) lagSuccess.inside3++;
       }
       if (!p.made) {
+        if (p.closeMiss) closeMisses++;
         if (p.missDist && speed[p.missDist] !== undefined) speed[p.missDist]++;
         if (p.missLine && line[p.missLine] !== undefined) line[p.missLine]++;
         if (p.missDist === 'short' || p.missDist === 'long') misses[p.missDist]++;
@@ -767,7 +795,7 @@ function computeRoundStats(round) {
       }
     });
   }
-  return { total, three, shortMakes, shortAttempts, misses, speed, line, holesPlayed, lagSuccess };
+  return { total, three, shortMakes, shortAttempts, misses, speed, line, holesPlayed, lagSuccess, closeMisses };
 }
 
 function renderLiveStats() {
@@ -837,7 +865,11 @@ function buildRoundDetailHtml(round, label, idSuffix) {
     }
   }
 
-  const promptText = 'Analyze my PuttTrap round from ' + fmtDate(round.startedAt) + ': ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts. Speed misses: short=' + s.speed.short + ' long=' + s.speed.long + '. Direction misses: left=' + s.line.left + ' right=' + s.line.right + '.' + (lagPct !== null ? ' Lag success ' + lagPct + '% (' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts + ').' : '') + (shortPct !== null ? ' Short-putt make rate ' + shortPct + '%.' : '') + ' What should I work on?';
+  const promptText = 'Analyze my PuttTrap round from ' + fmtDate(round.startedAt) + ': ' + s.total + ' total putts over ' + s.holesPlayed + ' holes, ' + s.three + ' three-putts. Speed misses: short=' + s.speed.short + ' long=' + s.speed.long + '. Direction misses: left=' + s.line.left + ' right=' + s.line.right + '.' + (s.closeMisses > 0 ? ' Lip-outs / close misses: ' + s.closeMisses + '.' : '') + (lagPct !== null ? ' Lag success ' + lagPct + '% (' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts + ').' : '') + (shortPct !== null ? ' Short-putt make rate ' + shortPct + '%.' : '') + ' What should I work on?';
+
+  const closeMissLine = s.closeMisses > 0
+    ? '<div class="section-label" style="margin-top: 16px;">lip-outs &amp; close misses</div><div class="lag-line">' + s.closeMisses + ' miss' + (s.closeMisses === 1 ? '' : 'es') + ' tagged as lip-out or burned edge — these were almost makes</div>'
+    : '';
 
   return '<div class="card"><div class="card-header"><div><div class="card-title">' + label + '</div><div class="card-sub">' + fmtDate(round.startedAt) + ' · ' + s.holesPlayed + ' holes</div></div></div>' +
     '<div class="stats-grid">' +
@@ -853,6 +885,7 @@ function buildRoundDetailHtml(round, label, idSuffix) {
     (diagnosis ? '<div class="lag-line" style="margin-top: 12px; padding: 10px 12px; background: var(--amber-bg); color: var(--amber-ink); border-radius: var(--radius-md); font-size: 12px;">' + diagnosis + '</div>' : '') +
     '<div class="section-label" style="margin-top: 16px;">lag putt control</div>' +
     '<div class="lag-line">' + (lagPct !== null ? lagPct + '% of long first putts (20 ft+) finished inside 3 ft &nbsp;·&nbsp; ' + s.lagSuccess.inside3 + ' of ' + s.lagSuccess.attempts : 'No long first putts logged yet') + '</div>' +
+    closeMissLine +
     '<button class="followup" data-prompt="' + encodeURIComponent(promptText) + '" id="coach-btn-' + idSuffix + '">Copy coaching summary ↗</button>' +
     '</div>';
 }
