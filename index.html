@@ -224,7 +224,7 @@
   <div class="brand">
     <div class="brand-mark">P</div>
     <div class="brand-name">PuttTrap</div>
-    <div class="brand-tag" id="brand-tag">v1.7</div>
+    <div class="brand-tag" id="brand-tag">v1.8</div>
   </div>
 
   <div class="tabs">
@@ -518,6 +518,31 @@
         </div>
         <div class="drill-last" id="clock-last">No entries yet</div>
       </div>
+
+      <div style="margin-top: 18px; margin-bottom: 8px; padding-top: 14px; border-top: 0.5px solid var(--border);">
+        <div class="card-title">Green-side chipping</div>
+        <div class="card-sub" style="margin-top: 4px;">Best way to putt less is approach closer. — Trevino</div>
+      </div>
+
+      <div class="drill-card">
+        <div class="drill-title">BLT · gap wedge</div>
+        <div class="drill-desc"><strong>B</strong>ack in stance, <strong>L</strong>ean 70% to front foot, <strong>T</strong>ilt shaft forward. No wrist flip. Target ratio: ~1/3 carry, ~2/3 roll. Out of 10 chips, how many finished inside 3 ft of the hole?</div>
+        <div class="drill-input">
+          <input type="number" id="blt-gw-input" placeholder="Out of 10" min="0" max="10" inputmode="numeric" />
+          <button id="blt-gw-save">Save</button>
+        </div>
+        <div class="drill-last" id="blt-gw-last">No entries yet</div>
+      </div>
+
+      <div class="drill-card">
+        <div class="drill-title">BLT · 8-iron</div>
+        <div class="drill-desc">Same setup, longer club for more rollout. Target ratio: ~1/5 carry, ~4/5 roll. Out of 10 chips, how many finished inside 3 ft of the hole?</div>
+        <div class="drill-input">
+          <input type="number" id="blt-8i-input" placeholder="Out of 10" min="0" max="10" inputmode="numeric" />
+          <button id="blt-8i-save">Save</button>
+        </div>
+        <div class="drill-last" id="blt-8i-last">No entries yet</div>
+      </div>
     </div>
 
     <div class="card">
@@ -537,7 +562,7 @@ const STORAGE_KEYS = { active: 'putttrap_active', rounds: 'putttrap_rounds', dri
 const state = {
   activeRound: null,
   rounds: [],
-  drills: { gate: [], ladder: [], clock: [] },
+  drills: { gate: [], ladder: [], clock: [], bltGw: [], blt8i: [] },
   cal: [],
   zero: null,  // { beta, gamma, capturedAt } — phone tilt offset on a known-flat surface
   selectedDist: null,
@@ -565,9 +590,9 @@ function loadAll() {
   state.drills = loadFromStorage(STORAGE_KEYS.drills, { gate: [], ladder: [], clock: [] });
   state.cal = loadFromStorage(STORAGE_KEYS.cal, []);
   state.zero = loadFromStorage(STORAGE_KEYS.zero, null);
-  ['gate', 'ladder', 'clock'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
+  ['gate', 'ladder', 'clock', 'bltGw', 'blt8i'].forEach(k => { if (!state.drills[k]) state.drills[k] = []; });
   if (!Array.isArray(state.cal)) state.cal = [];
-  $('brand-tag').textContent = 'v1.7 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.8 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   renderDrillLast();
 }
@@ -617,7 +642,7 @@ $('finish-round-btn').addEventListener('click', () => {
   saveRounds();
   state.activeRound = null;
   saveActive();
-  $('brand-tag').textContent = 'v1.7 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
+  $('brand-tag').textContent = 'v1.8 · ' + state.rounds.length + ' round' + (state.rounds.length === 1 ? '' : 's');
   renderRoundView();
   switchTab('stats');
 });
@@ -945,6 +970,20 @@ function showRoundDetail(idx) {
   });
 });
 
+// BLT chipping drills (separate id pattern: blt-gw / blt-8i with hyphens)
+[{ key: 'bltGw', id: 'blt-gw' }, { key: 'blt8i', id: 'blt-8i' }].forEach(({ key, id }) => {
+  $(id + '-save').addEventListener('click', () => {
+    const input = $(id + '-input');
+    const val = parseInt(input.value);
+    if (isNaN(val) || val < 0 || val > 10) return;
+    state.drills[key].unshift({ value: val, t: Date.now() });
+    if (state.drills[key].length > 60) state.drills[key] = state.drills[key].slice(0, 60);
+    saveDrills();
+    input.value = '';
+    renderDrillLast();
+  });
+});
+
 function renderDrillLast() {
   ['gate', 'ladder', 'clock'].forEach(drill => {
     const entries = state.drills[drill];
@@ -956,6 +995,17 @@ function renderDrillLast() {
     const recent = entries.slice(0, 5);
     const avg = recent.reduce((a, e) => a + e.value, 0) / recent.length;
     $(drill + '-last').textContent = 'Last: ' + last.value + ' · 5-session avg: ' + avg.toFixed(1) + ' · ' + entries.length + ' session' + (entries.length === 1 ? '' : 's') + ' total';
+  });
+  [{ key: 'bltGw', id: 'blt-gw' }, { key: 'blt8i', id: 'blt-8i' }].forEach(({ key, id }) => {
+    const entries = state.drills[key];
+    if (!entries || entries.length === 0) {
+      $(id + '-last').textContent = 'No entries yet';
+      return;
+    }
+    const last = entries[0];
+    const recent = entries.slice(0, 5);
+    const avg = recent.reduce((a, e) => a + e.value, 0) / recent.length;
+    $(id + '-last').textContent = 'Last: ' + last.value + '/10 · 5-session avg: ' + avg.toFixed(1) + ' · ' + entries.length + ' session' + (entries.length === 1 ? '' : 's') + ' total';
   });
 }
 
@@ -1001,7 +1051,7 @@ $('reset-btn').addEventListener('click', () => {
   Object.values(STORAGE_KEYS).forEach(k => localStorage.removeItem(k));
   state.activeRound = null;
   state.rounds = [];
-  state.drills = { gate: [], ladder: [], clock: [] };
+  state.drills = { gate: [], ladder: [], clock: [], bltGw: [], blt8i: [] };
   state.cal = [];
   state.zero = null;
   loadAll();
